@@ -1,4 +1,4 @@
-import mysql from "mysql2/promise"; // 使用 Promise 版本
+const mysql = require("mysql2/promise"); // 使用 Promise 版本
 
 // 创建连接池（推荐生产环境使用）
 const pool = mysql.createPool({
@@ -11,4 +11,4 @@ const pool = mysql.createPool({
   queueLimit: 0, // 无排队限制
 });
 
-export default pool;
+module.exports = pool;

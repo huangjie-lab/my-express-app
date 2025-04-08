@@ -1,5 +1,5 @@
-import "dotenv/config"; // 放在文件最顶部
-import app from "./app.js";
+require("dotenv/config"); // 放在文件最顶部
+const app = require("./app.js");
 
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {

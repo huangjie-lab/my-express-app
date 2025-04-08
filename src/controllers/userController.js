@@ -1,7 +1,11 @@
-import * as userModel from "../models/userModel.js";
+const userModel = require("../models/userModel.js");
+
+const demo = (req, res) => {
+  res.json({ message: "Hello from Express!" });
+};
 
 // 获取所有用户
-export const getUsers = async (req, res) => {
+const getUsers = async (req, res) => {
   try {
     const users = await userModel.getAllUsers();
     res.json(users);
@@ -12,7 +16,7 @@ export const getUsers = async (req, res) => {
 };
 
 // 创建用户
-export const addUser = async (req, res) => {
+const addUser = async (req, res) => {
   const { name, email } = req.query;
 
   console.log(name, email, "name, email");
@@ -31,4 +35,10 @@ export const addUser = async (req, res) => {
     console.error("Error creating user:", err);
     res.status(500).json({ error: "Failed to create user" });
   }
+};
+
+module.exports = {
+  getUsers,
+  addUser,
+  demo,
 };
