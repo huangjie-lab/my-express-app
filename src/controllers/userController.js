@@ -4,17 +4,6 @@ const demo = (req, res) => {
   res.json({ message: "Hello from Express!" });
 };
 
-// 获取所有用户
-const getUsers = async (req, res) => {
-  try {
-    const users = await userModel.getAllUsers();
-    res.json(users);
-  } catch (err) {
-    console.error("Error fetching users:", err);
-    res.status(500).json({ error: "Database query failed" });
-  }
-};
-
 // 创建用户
 const addUser = async (req, res) => {
   const { name, email } = req.query;
@@ -38,7 +27,6 @@ const addUser = async (req, res) => {
 };
 
 module.exports = {
-  getUsers,
   addUser,
   demo,
 };

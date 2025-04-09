@@ -1,11 +1,5 @@
 const pool = require("../config/db.js");
 
-// 获取所有用户
-const getAllUsers = async () => {
-  const [rows] = await pool.query("SELECT * FROM users");
-  return rows;
-};
-
 // 创建用户
 const createUser = async (name, email) => {
   const [result] = await pool.query(
@@ -22,7 +16,6 @@ const getUserById = async (id) => {
 };
 
 module.exports = {
-  getAllUsers,
   createUser,
   getUserById,
 };
