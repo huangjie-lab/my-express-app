@@ -12,6 +12,8 @@ const {
   delWootTable,
 } = require("../controllers/woot/index.js");
 const { getBdld, addBdld } = require("../controllers/bdld/index.js");
+const { getAdSet, addAdSet } = require("../controllers/adSet/index.js");
+const { getAdEdit, addAdEdit } = require("../controllers/adEdit/index.js");
 const { demo } = require("../controllers/userController.js");
 const router = express.Router();
 
@@ -26,6 +28,10 @@ router.post("/addWoot", addWootTable);
 router.get("/delWoot", delWootTable);
 router.post("/editWoot", editWootTable);
 router.get("/getBdld", getBdld);
-router.get("/addBdld", addBdld);
+router.post("/addBdld", addBdld);
+router.get("/getAdSet", getAdSet);
+router.post("/addAdSet", addAdSet);
+router.get("/getAdEdit", getAdEdit);
+router.post("/addAdEdit", addAdEdit);
 
 module.exports = router;

@@ -1,8 +1,11 @@
 const wootModel = require("../../models/woot/index");
 // 获取WOOT申报表
 const getWootTable = async (req, res) => {
+  const { page, pageSize } = req.query;
+  const limit = pageSize;
+  const offset = (page - 1) * pageSize;
   try {
-    const users = await wootModel.getWootTableData();
+    const users = await wootModel.getWootTableData(limit, offset);
     res.json(users);
   } catch (err) {
     console.error("Error fetching users:", err);

@@ -1,7 +1,9 @@
 const pool = require("../../config/db.js");
 // 获取流程表
-const getProcessTableData = async () => {
-  const [rows] = await pool.query("SELECT * FROM process_table");
+const getProcessTableData = async (LIMIT, OFFSET) => {
+  const [rows] = await pool.query(
+    `SELECT * FROM process_table LIMIT ${LIMIT} OFFSET ${OFFSET}`
+  );
   return rows;
 };
 
