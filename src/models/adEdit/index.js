@@ -6,10 +6,10 @@ const getAdEditData = async (LIMIT, OFFSET) => {
 };
 
 const addAdEditData = async (body) => {
-  const { wxNum, rule, uploadFile, uploadFileName, uploadTime } = body;
+  const { wxNum, type } = body;
   const [result] = await pool.query(
-    "INSERT INTO bdld_table (wxNum, rule, uploadFile, uploadFileName, uploadTime) VALUES (?,?,?,?,?)",
-    [wxNum, rule, uploadFile, uploadFileName, uploadTime]
+    "INSERT INTO advertise_edit_table (wxNum, type) VALUES (?,?)",
+    [wxNum, type]
   );
   return result.insertId;
 };

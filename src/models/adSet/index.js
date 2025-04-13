@@ -6,11 +6,12 @@ const getAdSetData = async () => {
 };
 
 const addAdSetData = async (body) => {
-  const { wxNum, startDate, endDate, uploadFile, uploadFileName, uploadTime } =
-    body;
+  const { wxNum, startDate, endDate } = body;
+  console.log(wxNum, startDate, endDate, "wxNum, startDate, endDate");
+
   const [result] = await pool.query(
-    "INSERT INTO bdld_table (wxNum, startDate, endDate, uploadFile, uploadFileName, uploadTime) VALUES (?,?,?,?,?,?)",
-    [wxNum, startDate, endDate, uploadFile, uploadFileName, uploadTime]
+    "INSERT INTO advertise_set_table (wxNum, startDate, endDate) VALUES (?,?,?)",
+    [wxNum, startDate, endDate]
   );
   return result.insertId;
 };
