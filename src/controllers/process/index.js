@@ -2,11 +2,11 @@ const processModel = require("../../models/process/index.js");
 
 // 获取流程表
 const getProcessTable = async (req, res) => {
-  const { page, pageSize } = req.query;
+  const { page, pageSize, name } = req.query;
   const limit = pageSize;
   const offset = (page - 1) * pageSize;
   try {
-    const users = await processModel.getProcessTableData(limit, offset);
+    const users = await processModel.getProcessTableData(limit, offset, name);
     res.json(users);
   } catch (err) {
     console.error("Error fetching users:", err);

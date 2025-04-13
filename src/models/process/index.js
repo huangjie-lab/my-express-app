@@ -1,9 +1,11 @@
 const pool = require("../../config/db.js");
 // 获取流程表
-const getProcessTableData = async (LIMIT, OFFSET) => {
-  const [rows] = await pool.query(
-    `SELECT * FROM process_table LIMIT ${LIMIT} OFFSET ${OFFSET}`
-  );
+const getProcessTableData = async (LIMIT, OFFSET, NAME) => {
+  let sql = `SELECT * FROM process_table LIMIT ${LIMIT} OFFSET ${OFFSET}`;
+  if (NAME) {
+    sql = `SELECT * FROM process_table WHERE name LIKE "%${NAME}%" LIMIT ${LIMIT} OFFSET ${OFFSET}`;
+  }
+  const [rows] = await pool.query(sql);
   return rows;
 };
 

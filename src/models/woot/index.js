@@ -1,11 +1,12 @@
 const pool = require("../../config/db.js");
 // 获取WOOT申报表
-const getWootTableData = async (LIMIT, OFFSET) => {
-  console.log(LIMIT, OFFSET, "LIMIT, OFFSET");
-
-  const [rows] = await pool.query(
-    `SELECT * FROM woot_table LIMIT ${LIMIT} OFFSET ${OFFSET}`
-  );
+const getWootTableData = async (LIMIT, OFFSET, ASIN) => {
+  console.log(LIMIT, OFFSET, "LIMIT, OFFSET", ASIN, "ASIN");
+  let sql = `SELECT * FROM woot_table LIMIT ${LIMIT} OFFSET ${OFFSET}`;
+  if (ASIN) {
+    sql = `SELECT * FROM woot_table WHERE asin LIKE "%${ASIN}%" LIMIT ${LIMIT} OFFSET ${OFFSET}`;
+  }
+  const [rows] = await pool.query(sql);
   return rows;
 };
 
