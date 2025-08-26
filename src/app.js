@@ -9,8 +9,11 @@ app.use(express.urlencoded({ extended: true })); // 解析表单数据
 app.use(express.static(path.join(__dirname, "../../build"))); // 加载前端静态资源
 
 // 路由配置
-const router = require("./routes/users.js");
-app.use("/api", router);
+const userRouter = require("./routes/users.js");
+const loginRouter = require("./routes/login.js");
+
+app.use("/api", userRouter);
+app.use("/api", loginRouter);
 
 // 404 处理
 app.use((req, res) => {
