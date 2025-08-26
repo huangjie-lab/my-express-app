@@ -9,28 +9,27 @@ const SECRET_KEY = "your_secret_key";
 const login = async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res
-      .status(400)
-      .send({ error: "Username and password are required." });
+    return res.status(400).send({ error: "用户名或密码不能为空" });
   }
   try {
     const existingUser = await loginModel.getUserByUsername({ username });
     if (!existingUser) {
-      return res.status(400).send({ error: "Username not exists." });
+      return res.status(400).send({ error: "用户名不存在" });
     }
 
     if (!bcrypt.compareSync(password, existingUser.password_hash)) {
       return res.status(400).send({
-        message: "password error",
+        message: "密码错误",
       });
     }
     const token = jwt.sign({ userId: existingUser.id }, SECRET_KEY, {
       expiresIn: "1h",
     });
     res.status(201).send({
-      message: "login successful!",
+      message: "登录成功",
       userId: existingUser.id,
       token,
+      success: true,
     });
   } catch (error) {
     res.status(500).send({ error: "Server error" });
@@ -41,14 +40,12 @@ const login = async (req, res) => {
 const register = async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
-    return res
-      .status(400)
-      .send({ error: "Username and password are required." });
+    return res.status(400).send({ error: "用户名或密码不能为空" });
   }
   try {
     const existingUser = await loginModel.getUserByUsername({ username });
     if (existingUser) {
-      return res.status(400).send({ error: "Username already exists." });
+      return res.status(400).send({ error: "用户名已存在" });
     }
     // 加密todo
     const userId = await loginModel.addUser({
@@ -56,8 +53,9 @@ const register = async (req, res) => {
       password: bcrypt.hashSync(password, 10),
     });
     res.status(201).send({
-      message: "Registration successful!",
+      message: "注册成功",
       userId,
+      success: true,
     });
   } catch (error) {
     res.status(500).send({ error: "Server error" });
