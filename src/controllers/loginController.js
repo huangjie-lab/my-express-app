@@ -1,9 +1,7 @@
 const loginModel = require("../models/loginModel.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
-// token密钥
-const SECRET_KEY = "your_secret_key";
+const { JWT_SECRET } = require("../middleware/auth.js");
 
 // 登陆
 const login = async (req, res) => {
@@ -22,7 +20,7 @@ const login = async (req, res) => {
         message: "密码错误",
       });
     }
-    const token = jwt.sign({ userId: existingUser.id }, SECRET_KEY, {
+    const token = jwt.sign({ userId: existingUser.id }, JWT_SECRET, {
       expiresIn: "1h",
     });
     res.status(201).send({
