@@ -71,6 +71,7 @@ const getAsins = async (req, res) => {
     return res.status(200).send({
       data: rows,
       success: true,
+      total: rows.length,
     });
   } catch (error) {
     return res.status(500).send({ error: "Server error" });

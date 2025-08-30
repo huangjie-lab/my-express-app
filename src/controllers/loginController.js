@@ -27,6 +27,7 @@ const login = async (req, res) => {
       message: "登录成功",
       userId: existingUser.id,
       token,
+      username,
       success: true,
     });
   } catch (error) {

@@ -17,12 +17,12 @@ const productManagerRouter = require("./routes/productManager/index.js");
 
 // 公开路由（无需鉴权）应在鉴权中间件之前挂载
 app.use("/api", loginRouter);
-app.use("/api", productManagerRouter);
 
 // 本地开发环境放行 asinRouter，其它环境走鉴权
 if (process.env.NODE_ENV === "development") {
   app.use("/api", asinRouter);
   app.use("/api", userRouter);
+  app.use("/api", productManagerRouter);
 }
 
 // 自此之后的 /api 路由均需要鉴权
@@ -32,6 +32,7 @@ app.use("/api", authenticateToken);
 if (process.env.NODE_ENV !== "development") {
   app.use("/api", asinRouter);
   app.use("/api", userRouter);
+  app.use("/api", productManagerRouter);
 }
 
 // 404 处理
