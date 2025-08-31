@@ -28,7 +28,8 @@ const addAsin = async (req, res) => {
 
 // 编辑 Asin
 const editAsin = async (req, res) => {
-  const { id, asin, brand, title } = req.body || {};
+  const { id } = req.params || {};
+  const { asin, brand, title } = req.body || {};
   if (!id || !asin || !brand || !title) {
     return res.status(400).send({
       error: "缺少必要参数: id, asin, brand, title",
@@ -48,7 +49,7 @@ const editAsin = async (req, res) => {
 
 // 删除 Asin
 const deleteAsin = async (req, res) => {
-  const { id } = req.body || {};
+  const { id } = req.params || {};
   if (!id) {
     return res.status(400).send({ error: "缺少必要参数: id" });
   }
@@ -64,14 +65,27 @@ const deleteAsin = async (req, res) => {
   }
 };
 
-// 查询 Asins 列表
+// 查询 Asins 列表（支持多字段查询和分页）
 const getAsins = async (req, res) => {
   try {
-    const rows = await asinModel.getAsinData();
+    // 从查询参数获取过滤条件和分页信息
+    const { asin, brand, title, page = 1, pageSize = 10 } = req.body;
+    const pageNum = parseInt(page, 10) || 1;
+    const size = parseInt(pageSize, 10) || 10;
+
+    // 调用模型层获取数据
+    const result = await asinModel.getAsinData({
+      asin,
+      brand,
+      title,
+      page: pageNum,
+      pageSize: size,
+    });
+
     return res.status(200).send({
-      data: rows,
+      data: result.data,
       success: true,
-      total: rows.length,
+      total: result.total,
     });
   } catch (error) {
     return res.status(500).send({ error: "Server error" });
