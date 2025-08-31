@@ -14,6 +14,8 @@ const loginRouter = require("./routes/login.js");
 const asinRouter = require("./routes/asin.js");
 const { authenticateToken } = require("./middleware/auth.js");
 const productManagerRouter = require("./routes/productManager/index.js");
+const goodsRouter = require("./routes/goods");
+const activityRouter = require("./routes/activityRoutes.js");
 
 // 公开路由（无需鉴权）应在鉴权中间件之前挂载
 app.use("/api", loginRouter);
@@ -23,6 +25,8 @@ if (process.env.NODE_ENV === "development") {
   app.use("/api", asinRouter);
   app.use("/api", userRouter);
   app.use("/api", productManagerRouter);
+  app.use("/api", goodsRouter);
+  app.use("/api", activityRouter);
 }
 
 // 自此之后的 /api 路由均需要鉴权
@@ -33,6 +37,8 @@ if (process.env.NODE_ENV !== "development") {
   app.use("/api", asinRouter);
   app.use("/api", userRouter);
   app.use("/api", productManagerRouter);
+  app.use("/api", goodsRouter);
+  app.use("/api", activityRouter);
 }
 
 // 404 处理

@@ -3,7 +3,7 @@ const activityModel = require("../models/activityModel");
 // 获取活动列表
 const getActivities = async (req, res) => {
   try {
-    const activities = await activityModel.getActivities(req.query);
+    const activities = await activityModel.getActivities(req.body);
     res.status(200).send({
       message: "活动列表获取成功",
       data: activities,
