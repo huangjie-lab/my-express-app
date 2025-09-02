@@ -41,7 +41,7 @@ const login = async (req, res) => {
 
 // 注册
 const register = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body;
   if (!username || !password) {
     return res.status(400).send({ error: "用户名或密码不能为空" });
   }
@@ -53,6 +53,7 @@ const register = async (req, res) => {
     // 加密todo
     const userId = await loginModel.addUser({
       username,
+      email,
       password: bcrypt.hashSync(password, 10),
     });
     res.status(201).send({
@@ -68,7 +69,7 @@ const register = async (req, res) => {
 // 修改用户信息
 const updateUser = async (req, res) => {
   try {
-    const { user_id, username, email, img, newPassword } = req.body;
+    const { user_id, username, email, img, password } = req.body;
 
     // 验证必填字段
     if (!user_id) {
@@ -110,9 +111,9 @@ const updateUser = async (req, res) => {
     if (username !== undefined) updateData.username = username;
 
     // 添加密码修改逻辑
-    if (newPassword) {
+    if (password) {
       const saltRounds = 10;
-      updateData.password_hash = bcrypt.hashSync(newPassword, saltRounds);
+      updateData.password_hash = bcrypt.hashSync(password, saltRounds);
     }
 
     const isUpdated = await loginModel.updateUser(user_id, updateData);

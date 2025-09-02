@@ -3,10 +3,19 @@ const goodsModel = require("../models/goodsModel");
 // 获取商品列表
 const getGoods = async (req, res) => {
   try {
-    const goods = await goodsModel.getGoods(req.body);
+    const [goods, total] = await Promise.all([
+      goodsModel.getGoods(req.body),
+      goodsModel.getGoodsTotal(req.body),
+    ]);
     res.status(200).send({
       message: "商品列表获取成功",
-      data: goods,
+      data: {
+        list: goods,
+        total: total,
+        page: parseInt(req.body.page) || 1,
+        limit: parseInt(req.body.limit) || 10,
+        pages: Math.ceil(total / (parseInt(req.body.limit) || 10)),
+      },
     });
   } catch (error) {
     res.status(500).send({

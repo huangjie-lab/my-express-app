@@ -3,10 +3,19 @@ const activityModel = require("../models/activityModel");
 // 获取活动列表
 const getActivities = async (req, res) => {
   try {
-    const activities = await activityModel.getActivities(req.body);
+    const [activities, total] = await Promise.all([
+      activityModel.getActivities(req.body),
+      activityModel.getActivitiesTotal(req.body),
+    ]);
     res.status(200).send({
       message: "活动列表获取成功",
-      data: activities,
+      data: {
+        list: activities,
+        total: total,
+        page: parseInt(req.body.page) || 1,
+        limit: parseInt(req.body.limit) || 10,
+        pages: Math.ceil(total / (parseInt(req.body.limit) || 10)),
+      },
     });
   } catch (error) {
     res.status(500).send({

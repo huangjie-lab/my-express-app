@@ -10,11 +10,11 @@ const getUserByUsername = async ({ username }) => {
   return rows[0];
 };
 
-const addUser = async ({ username, password }) => {
+const addUser = async ({ username, password, email }) => {
   const user_id = uuidv4(); // 生成UUID作为user_id
   const [result] = await pool.query(
-    "INSERT INTO user_accounts (user_id, username, password_hash, created_at) VALUES (?, ?, ?, ?)",
-    [user_id, username, password, new Date()]
+    "INSERT INTO user_accounts (user_id, email, username, password_hash, created_at) VALUES (?, ?,?, ?, ?)",
+    [user_id, email, username, password, new Date()]
   );
   return user_id; // 返回生成的user_id
 };

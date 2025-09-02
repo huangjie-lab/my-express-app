@@ -28,6 +28,29 @@ const getActivities = async (params) => {
   return rows;
 };
 
+// 获取活动总数
+const getActivitiesTotal = async (params) => {
+  const { group_id, activity_type, asin } = params;
+  let query = "SELECT COUNT(*) as total FROM campaign_activities WHERE 1=1";
+  const queryParams = [];
+
+  if (group_id) {
+    query += " AND group_id = ?";
+    queryParams.push(group_id);
+  }
+  if (activity_type) {
+    query += " AND activity_type = ?";
+    queryParams.push(activity_type);
+  }
+  if (asin) {
+    query += " AND asin = ?";
+    queryParams.push(asin);
+  }
+
+  const [rows] = await pool.query(query, queryParams);
+  return rows[0].total;
+};
+
 // 添加活动
 const addActivities = async (activityData) => {
   const {
@@ -87,6 +110,7 @@ const delActivities = async (id) => {
 
 module.exports = {
   getActivities,
+  getActivitiesTotal,
   addActivities,
   updateActivities,
   delActivities,

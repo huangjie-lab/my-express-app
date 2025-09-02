@@ -28,6 +28,28 @@ const getGoods = async (params) => {
   return rows;
 };
 
+// 获取商品总数
+const getGoodsTotal = async (params) => {
+  const { asin, brand, title } = params;
+  let query = "SELECT COUNT(*) as total FROM take_goods WHERE 1=1";
+  const queryParams = [];
+
+  if (asin) {
+    query += " AND asin = ?";
+    queryParams.push(asin);
+  }
+  if (brand) {
+    query += " AND brand = ?";
+    queryParams.push(brand);
+  }
+  if (title) {
+    query += " AND title LIKE ?";
+    queryParams.push(`%${title}%`);
+  }
+
+  const [rows] = await pool.query(query, queryParams);
+  return rows[0].total;
+};
 // 获取单个商品
 const getGoodById = async (id) => {
   const [rows] = await pool.query("SELECT * FROM take_goods WHERE id = ?", [
@@ -68,6 +90,7 @@ const delGood = async (id) => {
 
 module.exports = {
   getGoods,
+  getGoodsTotal,
   getGoodById,
   addGood,
   updateGood,
