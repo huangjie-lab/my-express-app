@@ -69,7 +69,11 @@ const register = async (req, res) => {
 // 修改用户信息
 const updateUser = async (req, res) => {
   try {
-    const { user_id, username, email, img, password } = req.body;
+    // 从FormData获取字段（文本字段在req.body，文件在req.file）
+    const { user_id, username, email, password } = req.body;
+    // 获取上传的图片文件
+    const imgFile = req.file;
+    console.log(imgFile, "imgFile");
 
     // 验证必填字段
     if (!user_id) {
@@ -107,8 +111,12 @@ const updateUser = async (req, res) => {
     // 调用Model层更新用户信息
     const updateData = {};
     if (email !== undefined) updateData.email = email;
-    if (img !== undefined) updateData.img = img;
     if (username !== undefined) updateData.username = username;
+    // 处理图片上传
+    if (imgFile) {
+      // 保存图片URL（相对于网站根目录）
+      updateData.img = `/uploads/${imgFile.filename}`;
+    }
 
     // 添加密码修改逻辑
     if (password) {
@@ -128,6 +136,10 @@ const updateUser = async (req, res) => {
           username: updatedUser.username,
           email: updatedUser.email,
           img: updatedUser.img,
+          // 图片完整URL（可选）
+          imgUrl: updatedUser.img
+            ? `${req.protocol}://${req.get("host")}${updatedUser.img}`
+            : null,
         },
         success: true,
       });
