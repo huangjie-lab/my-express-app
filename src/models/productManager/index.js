@@ -34,6 +34,10 @@ const getAllProductData = async (searchParams, limit, offset) => {
     whereConditions.push("win_status = ?");
     queryParams.push(searchParams.win_status);
   }
+  if (searchParams.status) {
+    whereConditions.push("status = ?");
+    queryParams.push(searchParams.status);
+  }
 
   // 添加WHERE子句
   if (whereConditions.length > 0) {

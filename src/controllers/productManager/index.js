@@ -21,6 +21,7 @@ const getAllProduct = async (req, res) => {
         req.body.win_status !== undefined
           ? parseInt(req.body.win_status)
           : undefined,
+      status: req.body.status,
     };
 
     // 过滤掉undefined的参数
