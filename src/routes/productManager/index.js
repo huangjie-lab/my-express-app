@@ -7,6 +7,7 @@ const {
   deleteProduct,
   updateProduct,
   importProducts,
+  exportProducts,
 } = require("../../controllers/productManager/index.js");
 const excelUpload = require("../../middleware/excelUpload.js");
 
@@ -24,5 +25,8 @@ router.put("/updateProduct/:id", updateProduct);
 
 // 导入Excel产品数据路由
 router.post("/importProducts", excelUpload.single("file"), importProducts);
+
+// 导出产品数据为Excel路由
+router.post("/exportProducts", exportProducts);
 
 module.exports = router;

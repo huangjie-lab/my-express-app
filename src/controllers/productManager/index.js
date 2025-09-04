@@ -1,6 +1,7 @@
 const productModel = require("../../models/productManager/index.js");
 const XLSX = require("xlsx");
 const fs = require("fs");
+const path = require("path");
 
 // 查询所有产品
 const getAllProduct = async (req, res) => {
@@ -212,10 +213,103 @@ const importProducts = async (req, res) => {
   }
 };
 
+// 导出产品数据为Excel
+const exportProducts = async (req, res) => {
+  req.body = req.body || {};
+
+  try {
+    // 获取查询参数
+    const searchParams = {
+      asin: req.body.asin,
+      fnsku: req.body.fnsku,
+      title: req.body.title,
+      product_name: req.body.product_name,
+      brand: req.body.brand,
+      store_name: req.body.store_name,
+      win_status:
+        req.body.win_status !== undefined
+          ? parseInt(req.body.win_status)
+          : undefined,
+      status: req.body.status,
+    };
+
+    // 过滤掉undefined的参数
+    Object.keys(searchParams).forEach((key) => {
+      if (searchParams[key] === undefined) {
+        delete searchParams[key];
+      }
+    });
+
+    // 获取所有数据（不分页）
+    const products = await productModel.getAllProductData(
+      searchParams,
+      10000,
+      0
+    );
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "没有找到要导出的数据",
+      });
+    }
+
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new();
+
+    // 创建工作表
+    const worksheet = XLSX.utils.json_to_sheet(products);
+
+    // 添加工作表到工作簿
+    XLSX.utils.book_append_sheet(workbook, worksheet, "产品数据");
+
+    // 生成临时文件路径
+    const tempDir = path.join(__dirname, "../../../uploads/excel");
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+
+    const tempFileName = `products_export_${Date.now()}.xlsx`;
+    const tempFilePath = path.join(tempDir, tempFileName);
+
+    // 写入文件
+    XLSX.writeFile(workbook, tempFilePath);
+
+    // 设置响应头
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="products_export.xlsx"`
+    );
+
+    // 发送文件
+    res.sendFile(tempFilePath, (err) => {
+      if (err) {
+        console.error("文件发送错误:", err);
+      }
+      // 清理临时文件
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    });
+  } catch (error) {
+    console.error("产品导出错误:", error);
+    res.status(500).json({
+      success: false,
+      message: "产品导出失败",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllProduct,
   createProduct,
   deleteProduct,
   updateProduct,
   importProducts,
+  exportProducts,
 };
