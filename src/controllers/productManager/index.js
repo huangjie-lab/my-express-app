@@ -1,4 +1,6 @@
 const productModel = require("../../models/productManager/index.js");
+const XLSX = require("xlsx");
+const fs = require("fs");
 
 // 查询所有产品
 const getAllProduct = async (req, res) => {
@@ -116,9 +118,104 @@ const updateProduct = async (req, res) => {
   }
 };
 
+// 导入Excel产品数据
+const importProducts = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "请上传Excel文件",
+      });
+    }
+
+    const filePath = req.file.path;
+    const workbook = XLSX.readFile(filePath);
+
+    // 获取第一个工作表
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+
+    // 将工作表转换为JSON
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+      header: 1,
+      defval: "",
+      raw: false,
+    });
+
+    // 处理数据：第一行作为表头
+    const headers = jsonData[0] || [];
+    const rows = jsonData.slice(1);
+
+    // 验证表头是否包含必填字段
+    const requiredFields = [
+      "asin",
+      "fnsku",
+      "title",
+      "brand",
+      "win_status",
+      "status",
+      "product_name",
+    ];
+    const missingFields = requiredFields.filter(
+      (field) => !headers.includes(field)
+    );
+
+    if (missingFields.length > 0) {
+      // 清理临时文件
+      fs.unlinkSync(filePath);
+      return res.status(400).json({
+        success: false,
+        message: `Excel文件缺少必填字段: ${missingFields.join(", ")}`,
+      });
+    }
+
+    // 处理数据行
+    const processedData = rows.map((row, index) => {
+      const rowData = {};
+      headers.forEach((header, colIndex) => {
+        if (header) {
+          rowData[header] = row[colIndex] || "";
+        }
+      });
+      return rowData;
+    });
+
+    // 调用批量插入方法
+    const importResult = await productModel.batchInsertProducts(processedData);
+
+    // 清理临时文件
+    fs.unlinkSync(filePath);
+
+    res.json({
+      success: true,
+      message: "Excel文件导入成功",
+      data: {
+        totalRows: processedData.length,
+        successRows: importResult.success,
+        failedRows: importResult.failed,
+        errors: importResult.errors,
+      },
+    });
+  } catch (error) {
+    console.error("Excel导入错误:", error);
+
+    // 清理临时文件（如果存在）
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Excel文件导入失败",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllProduct,
   createProduct,
   deleteProduct,
   updateProduct,
+  importProducts,
 };

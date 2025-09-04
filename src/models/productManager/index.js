@@ -156,9 +156,165 @@ const updateProductData = async (id, productData) => {
   return result.affectedRows > 0;
 };
 
+// 批量插入产品数据
+const batchInsertProducts = async (productsData) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const results = [];
+    const errors = [];
+
+    for (let i = 0; i < productsData.length; i++) {
+      const product = productsData[i];
+      try {
+        // 验证必填字段
+        if (
+          !product.asin ||
+          !product.fnsku ||
+          !product.title ||
+          !product.brand ||
+          product.win_status === undefined ||
+          product.win_status === null ||
+          !product.status ||
+          !product.product_name
+        ) {
+          errors.push({
+            row: i + 2, // Excel行号（从2开始，因为第1行是表头）
+            error:
+              "缺少必填字段: asin, fnsku, title, brand, win_status, status, product_name为必填项",
+          });
+          continue;
+        }
+
+        // 检查ASIN是否已存在
+        const [existingProducts] = await connection.execute(
+          "SELECT id FROM product_management WHERE asin = ?",
+          [product.asin]
+        );
+
+        if (existingProducts.length > 0) {
+          errors.push({
+            row: i + 2,
+            error: "ASIN已存在",
+          });
+          continue;
+        }
+
+        // 准备插入数据，设置默认值
+        const insertData = {
+          asin: product.asin,
+          fnsku: product.fnsku,
+          brand: product.brand,
+          title: product.title,
+          product_name: product.product_name,
+          remark: product.remark || "",
+          shipping_method: product.shipping_method || "",
+          campaign_method: product.campaign_method || "",
+          transparent_program: product.transparent_program || 0,
+          hold_price: product.hold_price || 0,
+          bd_price: product.bd_price || 0,
+          msrp_price: product.msrp_price || 0,
+          fba_fee: product.fba_fee || 0,
+          amz_commission: product.amz_commission || 0,
+          purchase_price: product.purchase_price || 0,
+          inventory_quantity: product.inventory_quantity || 0,
+          weight: product.weight || 0,
+          length: product.length || 0,
+          width: product.width || 0,
+          height: product.height || 0,
+          has_battery: product.has_battery || 0,
+          battery_type: product.battery_type || "",
+          battery_capacity: product.battery_capacity || "",
+          store_id: product.store_id || "",
+          store_name: product.store_name || "",
+          store_email: product.store_email || "",
+          win_status: product.win_status,
+          status: product.status,
+          submit_time: product.submit_time || new Date().toISOString(),
+          invoice_number: product.invoice_number || "",
+          purchase_quantity: product.purchase_quantity || 0,
+        };
+
+        // 插入产品数据
+        const [result] = await connection.execute(
+          `INSERT INTO product_management (
+            asin, fnsku, brand, title, product_name, remark, 
+            shipping_method, campaign_method, transparent_program, 
+            hold_price, bd_price, msrp_price, fba_fee, amz_commission, purchase_price, 
+            inventory_quantity, weight, length, width, height, 
+            has_battery, battery_type, battery_capacity, 
+            store_id, store_name, store_email, 
+            win_status, status, submit_time, invoice_number, purchase_quantity
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            insertData.asin,
+            insertData.fnsku,
+            insertData.brand,
+            insertData.title,
+            insertData.product_name,
+            insertData.remark,
+            insertData.shipping_method,
+            insertData.campaign_method,
+            insertData.transparent_program,
+            insertData.hold_price,
+            insertData.bd_price,
+            insertData.msrp_price,
+            insertData.fba_fee,
+            insertData.amz_commission,
+            insertData.purchase_price,
+            insertData.inventory_quantity,
+            insertData.weight,
+            insertData.length,
+            insertData.width,
+            insertData.height,
+            insertData.has_battery,
+            insertData.battery_type,
+            insertData.battery_capacity,
+            insertData.store_id,
+            insertData.store_name,
+            insertData.store_email,
+            insertData.win_status,
+            insertData.status,
+            insertData.submit_time,
+            insertData.invoice_number,
+            insertData.purchase_quantity,
+          ]
+        );
+
+        results.push({
+          row: i + 2,
+          id: result.insertId,
+          success: true,
+        });
+      } catch (error) {
+        errors.push({
+          row: i + 2,
+          error: error.message,
+        });
+      }
+    }
+
+    await connection.commit();
+
+    return {
+      success: results.length,
+      failed: errors.length,
+      results,
+      errors,
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 module.exports = {
   getAllProductData,
   createProductData,
   deleteProductData,
   updateProductData,
+  batchInsertProducts,
 };

@@ -6,7 +6,9 @@ const {
   createProduct,
   deleteProduct,
   updateProduct,
+  importProducts,
 } = require("../../controllers/productManager/index.js");
+const excelUpload = require("../../middleware/excelUpload.js");
 
 // 查询所有产品路由
 router.post("/getAllProduct", getAllProduct);
@@ -19,5 +21,8 @@ router.delete("/deleteProduct/:id", deleteProduct);
 
 // 更新产品路由
 router.put("/updateProduct/:id", updateProduct);
+
+// 导入Excel产品数据路由
+router.post("/importProducts", excelUpload.single("file"), importProducts);
 
 module.exports = router;
