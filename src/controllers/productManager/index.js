@@ -60,6 +60,8 @@ const createProduct = async (req, res) => {
       transparent_program: req.body.transparent_program || 0,
       inventory_quantity: req.body.inventory_quantity || 0,
       has_battery: req.body.has_battery || 0,
+      purchase_quantity: req.body.purchase_quantity || 0,
+      invoice_number: req.body.invoice_number || "",
       ...req.body,
     };
 

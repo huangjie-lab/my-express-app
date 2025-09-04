@@ -80,6 +80,8 @@ const createProductData = async (productData) => {
     win_status,
     status,
     submit_time,
+    invoice_number,
+    purchase_quantity,
   } = productData;
 
   const query = `INSERT INTO product_management (
@@ -89,8 +91,8 @@ const createProductData = async (productData) => {
     inventory_quantity, weight, length, width, height, 
     has_battery, battery_type, battery_capacity, 
     store_id, store_name, store_email, 
-    win_status, status,submit_time
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    win_status, status, submit_time, invoice_number, purchase_quantity
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const [result] = await pool.query(query, [
     asin,
@@ -122,6 +124,8 @@ const createProductData = async (productData) => {
     win_status,
     status,
     submit_time,
+    invoice_number,
+    purchase_quantity,
   ]);
 
   return { id: result.insertId, ...productData };
