@@ -1,5 +1,17 @@
 const pool = require("../../config/db.js");
 
+// 格式化日期为 YYYY-MM-DD HH:MM:SS
+const formatDateTime = (date) => {
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hours = String(d.getHours()).padStart(2, "0");
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const seconds = String(d.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
 const getAllProductData = async (searchParams, limit, offset) => {
   let query = "SELECT * FROM product_management";
   const queryParams = [];
@@ -231,7 +243,7 @@ const batchInsertProducts = async (productsData) => {
           store_email: product.store_email || "",
           win_status: product.win_status,
           status: product.status,
-          submit_time: product.submit_time || new Date().toISOString(),
+          submit_time: product.submit_time || formatDateTime(new Date()),
           invoice_number: product.invoice_number || "",
           purchase_quantity: product.purchase_quantity || 0,
         };
