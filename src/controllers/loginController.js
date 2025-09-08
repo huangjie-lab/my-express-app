@@ -29,6 +29,7 @@ const login = async (req, res) => {
         username: existingUser.username,
         email: existingUser.email,
         img: existingUser.img,
+        role: existingUser.role,
       },
       message: "登录成功",
       token,
@@ -136,10 +137,7 @@ const updateUser = async (req, res) => {
           username: updatedUser.username,
           email: updatedUser.email,
           img: updatedUser.img,
-          // 图片完整URL（可选）
-          imgUrl: updatedUser.img
-            ? `${req.protocol}://${req.get("host")}${updatedUser.img}`
-            : null,
+          role: updatedUser.role,
         },
         success: true,
       });
