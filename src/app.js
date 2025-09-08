@@ -22,6 +22,7 @@ const productManagerRouter = require("./routes/productManager/index.js");
 const goodsRouter = require("./routes/goods");
 const activityRouter = require("./routes/activityRoutes.js");
 const checkPriceRouter = require("./routes/checkPrice.js");
+const websocketRouter = require("./routes/websocket.js");
 
 // 公开路由（无需鉴权）应在鉴权中间件之前挂载
 app.use("/api", loginRouter);
@@ -34,6 +35,7 @@ if (process.env.NODE_ENV === "development") {
   app.use("/api", goodsRouter);
   app.use("/api", activityRouter);
   app.use("/api", checkPriceRouter);
+  app.use("/api/ws", websocketRouter);
 }
 
 // 自此之后的 /api 路由均需要鉴权
@@ -47,6 +49,7 @@ if (process.env.NODE_ENV !== "development") {
   app.use("/api", goodsRouter);
   app.use("/api", activityRouter);
   app.use("/api", checkPriceRouter);
+  app.use("/api/ws", websocketRouter);
 }
 
 // 404 处理

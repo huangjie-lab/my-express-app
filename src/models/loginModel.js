@@ -48,7 +48,8 @@ const updateUser = async (userId, userData) => {
   // 添加密码字段支持
   if (userData.password_hash !== undefined)
     updateFields.password_hash = userData.password_hash;
-
+  if (userData.role !== undefined) updateFields.role = userData.role;
+  if (userData.status !== undefined) updateFields.status = userData.status;
   // 如果没有需要更新的字段，直接返回false
   if (Object.keys(updateFields).length === 0) {
     return false;

@@ -30,6 +30,7 @@ const login = async (req, res) => {
         email: existingUser.email,
         img: existingUser.img,
         role: existingUser.role,
+        status: existingUser.status,
       },
       message: "登录成功",
       token,
@@ -71,7 +72,7 @@ const register = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     // 从FormData获取字段（文本字段在req.body，文件在req.file）
-    const { user_id, username, email, password } = req.body;
+    const { user_id, username, email, password, role, status } = req.body;
     // 获取上传的图片文件
     const imgFile = req.file;
     console.log(imgFile, "imgFile");
@@ -113,6 +114,8 @@ const updateUser = async (req, res) => {
     const updateData = {};
     if (email !== undefined) updateData.email = email;
     if (username !== undefined) updateData.username = username;
+    if (role !== undefined) updateData.role = role;
+    if (status !== undefined) updateData.status = status;
     // 处理图片上传
     if (imgFile) {
       // 保存图片URL（相对于网站根目录）
@@ -138,6 +141,7 @@ const updateUser = async (req, res) => {
           email: updatedUser.email,
           img: updatedUser.img,
           role: updatedUser.role,
+          status: updatedUser.status,
         },
         success: true,
       });

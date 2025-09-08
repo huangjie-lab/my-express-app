@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket 客户端示例</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .panel {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .full-width {
+        grid-column: 1 / -1;
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      .connected {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .connecting {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      button {
+        padding: 8px 16px;
+        margin: 5px;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+      }
+      button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      button:hover:not(:disabled) {
+        background-color: #0056b3;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .log {
+        border: 1px solid #ddd;
+        height: 300px;
+        overflow-y: auto;
+        padding: 10px;
+        background-color: #f8f9fa;
+        font-family: monospace;
+        font-size: 12px;
+      }
+      .log-entry {
+        margin-bottom: 5px;
+        padding: 2px;
+      }
+      .log-info {
+        color: #007bff;
+      }
+      .log-success {
+        color: #28a745;
+      }
+      .log-error {
+        color: #dc3545;
+      }
+      .log-warning {
+        color: #ffc107;
+      }
+      h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+      }
+      .stat-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+      }
+      .message-type {
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: bold;
+        margin-right: 5px;
+      }
+      .type-connected {
+        background: #d4edda;
+        color: #155724;
+      }
+      .type-broadcast {
+        background: #cce5ff;
+        color: #004085;
+      }
+      .type-room_message {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .type-private_message {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔌 WebSocket 客户端示例</h1>
+
+    <div class="container">
+      <!-- 连接控制面板 -->
+      <div class="panel">
+        <h3>📡 连接控制</h3>
+        <div id="status" class="status disconnected">未连接</div>
+
+        <label>WebSocket URL:</label>
+        <input type="text" id="wsUrl" value="ws://localhost:3000/ws" />
+
+        <label>用户ID (可选):</label>
+        <input type="text" id="userId" placeholder="输入您的用户ID" />
+
+        <label>用户名 (可选):</label>
+        <input type="text" id="username" placeholder="输入用户名" />
+
+        <label>邮箱 (可选):</label>
+        <input type="text" id="email" placeholder="输入邮箱" />
+
+        <div>
+          <input type="checkbox" id="updateDatabase" />
+          <label for="updateDatabase">同时更新数据库</label>
+        </div>
+
+        <div>
+          <button id="connectBtn" onclick="connect()">连接</button>
+          <button id="disconnectBtn" onclick="disconnect()" disabled>
+            断开连接
+          </button>
+          <button onclick="updateUserInfo()" id="updateUserBtn" disabled>
+            更新用户信息
+          </button>
+          <button onclick="clearLog()">清除日志</button>
+        </div>
+      </div>
+
+      <!-- 房间管理面板 -->
+      <div class="panel">
+        <h3>🏠 房间管理</h3>
+
+        <label>房间名称:</label>
+        <input type="text" id="roomName" placeholder="输入房间名称" />
+
+        <div>
+          <button onclick="joinRoom()" id="joinRoomBtn" disabled>
+            加入房间
+          </button>
+          <button onclick="leaveRoom()" id="leaveRoomBtn" disabled>
+            离开房间
+          </button>
+        </div>
+
+        <div style="margin-top: 15px">
+          <label>当前房间:</label>
+          <div id="currentRoom" style="font-weight: bold; color: #007bff">
+            无
+          </div>
+        </div>
+      </div>
+
+      <!-- 消息发送面板 -->
+      <div class="panel">
+        <h3>💬 发送消息</h3>
+
+        <label>消息类型:</label>
+        <select id="messageType">
+          <option value="broadcast">广播消息</option>
+          <option value="room_message">房间消息</option>
+          <option value="private_message">私人消息</option>
+          <option value="ping">心跳检测</option>
+        </select>
+
+        <div id="targetClientDiv" style="display: none">
+          <label>目标客户端ID:</label>
+          <input
+            type="text"
+            id="targetClientId"
+            placeholder="输入目标客户端ID"
+          />
+        </div>
+
+        <label>消息内容:</label>
+        <textarea
+          id="messageContent"
+          rows="3"
+          placeholder="输入消息内容"
+        ></textarea>
+
+        <button onclick="sendMessage()" id="sendBtn" disabled>发送消息</button>
+      </div>
+
+      <!-- 服务器统计面板 -->
+      <div class="panel">
+        <h3>📊 服务器统计</h3>
+
+        <div class="stats" id="statsContainer">
+          <div class="stat-card">
+            <div class="stat-number" id="totalClients">0</div>
+            <div>在线客户端</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="totalRooms">0</div>
+            <div>活跃房间</div>
+          </div>
+        </div>
+
+        <button onclick="refreshStats()">刷新统计</button>
+      </div>
+
+      <!-- 消息日志 -->
+      <div class="panel full-width">
+        <h3>📝 消息日志</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+
+    <script>
+      let ws = null;
+      let clientId = null;
+      let currentRoom = null;
+
+      // 更新UI状态
+      function updateUI() {
+        const connected = ws && ws.readyState === WebSocket.OPEN;
+
+        document.getElementById("connectBtn").disabled = connected;
+        document.getElementById("disconnectBtn").disabled = !connected;
+        document.getElementById("joinRoomBtn").disabled = !connected;
+        document.getElementById("leaveRoomBtn").disabled = !connected;
+        document.getElementById("sendBtn").disabled = !connected;
+        document.getElementById("updateUserBtn").disabled = !connected;
+
+        document.getElementById("status").className = connected
+          ? "status connected"
+          : "status disconnected";
+        document.getElementById("status").textContent = connected
+          ? `已连接 (ID: ${clientId})`
+          : "未连接";
+
+        document.getElementById("currentRoom").textContent =
+          currentRoom || "无";
+      }
+
+      // 添加日志
+      function addLog(message, type = "info") {
+        const log = document.getElementById("log");
+        const entry = document.createElement("div");
+        entry.className = `log-entry log-${type}`;
+        entry.innerHTML = `<span style="color: #666;">[${new Date().toLocaleTimeString()}]</span> ${message}`;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      // 连接WebSocket
+      function connect() {
+        const url = document.getElementById("wsUrl").value;
+        const userId = document.getElementById("userId").value;
+
+        document.getElementById("status").className = "status connecting";
+        document.getElementById("status").textContent = "连接中...";
+
+        try {
+          ws = new WebSocket(url);
+
+          ws.onopen = function (event) {
+            addLog("🔗 WebSocket连接已建立", "success");
+
+            // 如果设置了用户ID，发送给服务器
+            if (userId) {
+              ws.send(
+                JSON.stringify({
+                  type: "set_user_info",
+                  userId: userId,
+                })
+              );
+            }
+
+            updateUI();
+            refreshStats();
+          };
+
+          ws.onmessage = function (event) {
+            try {
+              const data = JSON.parse(event.data);
+              handleMessage(data);
+            } catch (e) {
+              addLog(`📥 收到非JSON消息: ${event.data}`, "warning");
+            }
+          };
+
+          ws.onclose = function (event) {
+            addLog(
+              `🔌 连接已关闭 (代码: ${event.code}, 原因: ${
+                event.reason || "无"
+              })`,
+              "warning"
+            );
+            clientId = null;
+            currentRoom = null;
+            updateUI();
+          };
+
+          ws.onerror = function (error) {
+            addLog(`❌ WebSocket错误: ${error}`, "error");
+            updateUI();
+          };
+        } catch (error) {
+          addLog(`❌ 连接失败: ${error.message}`, "error");
+          updateUI();
+        }
+      }
+
+      // 断开连接
+      function disconnect() {
+        if (ws) {
+          ws.close(1000, "用户主动断开");
+          ws = null;
+        }
+      }
+
+      // 处理收到的消息
+      function handleMessage(data) {
+        const typeClass = data.type ? `type-${data.type}` : "";
+        let logMessage = `📥 <span class="message-type ${typeClass}">${data.type}</span>`;
+
+        switch (data.type) {
+          case "connected":
+            clientId = data.clientId;
+            logMessage += `连接成功，客户端ID: ${data.clientId}`;
+            break;
+
+          case "joined_room":
+            currentRoom = data.room;
+            logMessage += `成功加入房间: ${data.room} (成员数: ${data.roomMemberCount})`;
+            break;
+
+          case "left_room":
+            currentRoom = null;
+            logMessage += `已离开房间: ${data.room}`;
+            break;
+
+          case "user_joined":
+            logMessage += `用户 ${
+              data.userId || data.clientId
+            } 加入了房间 (成员数: ${data.roomMemberCount})`;
+            break;
+
+          case "user_left":
+            logMessage += `用户 ${
+              data.userId || data.clientId
+            } 离开了房间 (成员数: ${data.roomMemberCount})`;
+            break;
+
+          case "broadcast":
+            logMessage += `广播消息来自 ${data.fromUserId || data.from}: ${
+              data.content
+            }`;
+            break;
+
+          case "room_message":
+            logMessage += `房间 ${data.room} 消息来自 ${
+              data.fromUserId || data.from
+            }: ${data.content}`;
+            break;
+
+          case "private_message":
+            logMessage += `私人消息来自 ${data.fromUserId || data.from}: ${
+              data.content
+            }`;
+            break;
+
+          case "pong":
+            logMessage += `心跳响应: ${data.timestamp}`;
+            break;
+
+          case "user_info_updated":
+            logMessage += `用户信息更新: ${data.message}`;
+            if (data.userData) {
+              logMessage += ` - 用户数据: ${JSON.stringify(data.userData)}`;
+            }
+            break;
+
+          case "error":
+            logMessage += `错误: ${data.message}`;
+            addLog(logMessage, "error");
+            return;
+
+          case "server_shutdown":
+            logMessage += `服务器通知: ${data.message}`;
+            addLog(logMessage, "warning");
+            return;
+
+          default:
+            logMessage += `${JSON.stringify(data)}`;
+        }
+
+        addLog(logMessage, "success");
+        updateUI();
+      }
+
+      // 加入房间
+      function joinRoom() {
+        const roomName = document.getElementById("roomName").value.trim();
+        if (!roomName) {
+          alert("请输入房间名称");
+          return;
+        }
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              type: "join_room",
+              room: roomName,
+            })
+          );
+          addLog(`🏠 请求加入房间: ${roomName}`, "info");
+        }
+      }
+
+      // 离开房间
+      function leaveRoom() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              type: "leave_room",
+            })
+          );
+          addLog(`🚪 请求离开当前房间`, "info");
+        }
+      }
+
+      // 发送消息
+      function sendMessage() {
+        const type = document.getElementById("messageType").value;
+        const content = document.getElementById("messageContent").value.trim();
+
+        if (!content && type !== "ping") {
+          alert("请输入消息内容");
+          return;
+        }
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          const message = { type: type };
+
+          if (type === "private_message") {
+            const targetClientId = document
+              .getElementById("targetClientId")
+              .value.trim();
+            if (!targetClientId) {
+              alert("请输入目标客户端ID");
+              return;
+            }
+            message.targetClientId = targetClientId;
+          }
+
+          if (content) {
+            message.content = content;
+          }
+
+          ws.send(JSON.stringify(message));
+          addLog(`📤 发送${type}消息: ${content || "心跳"}`, "info");
+
+          // 清空消息内容
+          document.getElementById("messageContent").value = "";
+        }
+      }
+
+      // 更新用户信息
+      function updateUserInfo() {
+        const userId = document.getElementById("userId").value.trim();
+        const username = document.getElementById("username").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const updateDatabase =
+          document.getElementById("updateDatabase").checked;
+
+        if (!userId) {
+          alert("请输入用户ID");
+          return;
+        }
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          const message = {
+            type: "set_user_info",
+            userId: userId,
+            updateDatabase: updateDatabase,
+          };
+
+          // 只包含非空的字段
+          if (username) message.username = username;
+          if (email) message.email = email;
+
+          ws.send(JSON.stringify(message));
+          addLog(
+            `📤 更新用户信息: ${userId} ${
+              updateDatabase ? "(含数据库更新)" : "(仅WebSocket)"
+            }`,
+            "info"
+          );
+        }
+      }
+
+      // 刷新服务器统计
+      async function refreshStats() {
+        try {
+          const response = await fetch("/api/ws/stats");
+          const result = await response.json();
+
+          if (result.success) {
+            document.getElementById("totalClients").textContent =
+              result.data.totalClients;
+            document.getElementById("totalRooms").textContent =
+              result.data.totalRooms;
+          }
+        } catch (error) {
+          console.error("获取统计信息失败:", error);
+        }
+      }
+
+      // 清除日志
+      function clearLog() {
+        document.getElementById("log").innerHTML = "";
+      }
+
+      // 消息类型变更处理
+      document
+        .getElementById("messageType")
+        .addEventListener("change", function () {
+          const targetDiv = document.getElementById("targetClientDiv");
+          targetDiv.style.display =
+            this.value === "private_message" ? "block" : "none";
+        });
+
+      // 页面加载完成后的初始化
+      document.addEventListener("DOMContentLoaded", function () {
+        updateUI();
+
+        // 定期刷新统计信息
+        setInterval(refreshStats, 5000);
+
+        addLog("🚀 WebSocket客户端已准备就绪", "info");
+      });
+
+      // 页面关闭时断开连接
+      window.addEventListener("beforeunload", function () {
+        if (ws) {
+          ws.close();
+        }
+      });
+    </script>
+  </body>
+</html>
