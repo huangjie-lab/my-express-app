@@ -1,6 +1,7 @@
 const WebSocket = require("ws");
 const { v4: uuidv4 } = require("uuid");
 const loginModel = require("../models/loginModel.js");
+const checkPriceModel = require("../models/checkPriceModel.js");
 
 class WebSocketServer {
   constructor() {
@@ -82,6 +83,80 @@ class WebSocketServer {
     this.startHeartbeat(clientId);
   }
 
+  // 用户新增产品
+  async userCheckPriceCreated(clientId, message) {
+    // 调用核价管理的接口 createCheckPrice
+    try {
+      // 从消息中提取产品数据
+      const productData = message.data || {};
+
+      // 准备创建核价数据，设置必填字段和默认值
+      const checkPriceData = {
+        customer_id: productData.customer_id || null,
+        asin: productData.asin || "",
+        win: productData.win || null,
+        fnsku: productData.fnsku || "",
+        brand: productData.brand || "",
+        product_name: productData.product_name || "",
+        title: productData.title || "",
+        shipping_method: productData.shipping_method || null,
+        promotion_method: productData.promotion_method || null,
+        hold_price: productData.hold_price || 0,
+        bd_price: productData.bd_price || 0,
+        initial_review_price: productData.initial_review_price || 0,
+        final_review_price: productData.final_review_price || 0,
+        purchase_price: productData.purchase_price || 0,
+        pricing_benchmark: productData.pricing_benchmark || null,
+        woot_notes: productData.woot_notes || null,
+        msrp_price: productData.msrp_price || 0,
+        inventory_quantity: productData.inventory_quantity || 0,
+        actual_quantity: productData.actual_quantity || 0,
+        invoice_number: productData.invoice_number || null,
+        transparent_program: productData.transparent_program || "N",
+        amz_commission: productData.amz_commission || 0,
+        fba_shipping_fee: productData.fba_shipping_fee || 0,
+        weight: productData.weight || 0,
+        length: productData.length || 0,
+        width: productData.width || 0,
+        height: productData.height || 0,
+        store_id: productData.store_id || null,
+        store_name: productData.store_name || null,
+        store_email: productData.store_email || null,
+        submission_time: productData.submission_time || null,
+        has_battery: productData.has_battery || "N",
+        battery_type: productData.battery_type || null,
+        battery_capacity: productData.battery_capacity || 0,
+      };
+
+      // 调用模型层创建核价数据
+      const newCheckPrice = await checkPriceModel.createCheckPrice(
+        checkPriceData
+      );
+
+      // 发送成功响应
+      this.broadcast({
+        type: "user_check_price_created",
+        message: "核价数据创建成功",
+        data: newCheckPrice,
+      });
+
+      console.log(`客户端 ${clientId} 成功创建核价数据:`, newCheckPrice.id);
+    } catch (error) {
+      console.error(`创建核价数据失败 (${clientId}):`, error);
+
+      // 发送错误响应
+      this.sendToClient(clientId, {
+        type: "error",
+        message: "创建核价数据失败: " + error.message,
+      });
+    }
+  }
+
+  // 管理员初审价格
+  async adminFirstCheckPrice(clientId, message) {
+    console.log(`管理员初审价格: ${clientId}`, message);
+  }
+
   // 处理接收到的消息
   async handleMessage(clientId, rawMessage) {
     try {
@@ -106,12 +181,12 @@ class WebSocketServer {
 
       // 根据消息类型处理
       switch (message.type) {
-        case "change_product_status_by_user":
-          this.changeProductStatusByUser(clientId, message);
+        case "user_check_price_created":
+          await this.userCheckPriceCreated(clientId, message);
           break;
 
-        case "change_product_status_by_manager":
-          this.changeProductStatusByManager(clientId, message);
+        case "admin_first_check_price":
+          this.adminFirstCheckPrice(clientId, message);
           break;
 
         case "heart_beat":
@@ -119,10 +194,6 @@ class WebSocketServer {
             type: "pong",
             timestamp: new Date().toISOString(),
           });
-          break;
-
-        case "set_user_info":
-          await this.handleSetUserInfo(clientId, message);
           break;
 
         default:

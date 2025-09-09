@@ -35,7 +35,7 @@ const getAsinData = async ({ asin, brand, title, page = 1, pageSize = 10 }) => {
     params
   );
 
-  return { data, total: countResult[0].total };
+  return { data, total: countResult[0]?.total || 0 };
 };
 
 const addAsinData = async (body) => {

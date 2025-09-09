@@ -48,7 +48,7 @@ const getActivitiesTotal = async (params) => {
   }
 
   const [rows] = await pool.query(query, queryParams);
-  return rows[0].total;
+  return rows[0]?.total || 0;
 };
 
 // 添加活动

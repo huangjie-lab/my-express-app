@@ -48,7 +48,7 @@ const getGoodsTotal = async (params) => {
   }
 
   const [rows] = await pool.query(query, queryParams);
-  return rows[0].total;
+  return rows[0]?.total || 0;
 };
 // 获取单个商品
 const getGoodById = async (id) => {

@@ -151,6 +151,7 @@ const createCheckPrice = async (req, res) => {
 const updateCheckPrice = async (req, res) => {
   try {
     const { id } = req.params;
+
     const updateData = req.body;
 
     if (!id || Object.keys(updateData).length === 0) {

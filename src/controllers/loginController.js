@@ -23,6 +23,12 @@ const login = async (req, res) => {
     const token = jwt.sign({ userId: existingUser.user_id }, JWT_SECRET, {
       expiresIn: "1h",
     });
+    if (existingUser.status === 0) {
+      return res.status(400).send({
+        message: "用户已禁用",
+        success: false,
+      });
+    }
     res.status(201).send({
       data: {
         user_id: existingUser.user_id,

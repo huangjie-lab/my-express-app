@@ -87,7 +87,7 @@ const getCheckPriceCount = async (searchParams = {}) => {
   }
 
   const [rows] = await pool.query(query, queryParams);
-  return rows[0].total;
+  return rows[0]?.total || 0;
 };
 
 // 根据ID获取核价数据

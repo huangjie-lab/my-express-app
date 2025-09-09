@@ -34,14 +34,15 @@ const getAllProduct = async (req, res) => {
       }
     });
 
-    const products = await productModel.getAllProductData(
-      searchParams,
-      limit,
-      offset
-    );
+    // 同时获取产品列表和总数
+    const [products, total] = await Promise.all([
+      productModel.getAllProductData(searchParams, limit, offset),
+      productModel.getProductCount(searchParams),
+    ]);
+
     res.status(200).json({
       data: products,
-      total: products.length,
+      total: total,
     });
   } catch (error) {
     res.status(500).json({ message: "获取产品数据失败", error: error.message });

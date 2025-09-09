@@ -81,7 +81,8 @@ const createProductData = async (productData) => {
     msrp_price,
     fba_fee,
     amz_commission,
-    purchase_price,
+    initial_review_price,
+    final_review_price,
     inventory_quantity,
     weight,
     length,
@@ -99,16 +100,15 @@ const createProductData = async (productData) => {
     invoice_number,
     purchase_quantity,
   } = productData;
-
   const query = `INSERT INTO product_management (
     asin, fnsku, brand, title, product_name, remark, 
     shipping_method, campaign_method, transparent_program, 
-    hold_price, bd_price, msrp_price, fba_fee, amz_commission, purchase_price, 
-    inventory_quantity, weight, length, width, height, 
+    hold_price, bd_price, msrp_price, fba_fee, amz_commission, initial_review_price, final_review_price,
+    inventory_quantity, weight, length, width, height,
     has_battery, battery_type, battery_capacity, 
     store_id, store_name, store_email, 
     win_status, status, submit_time, invoice_number, purchase_quantity
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const [result] = await pool.query(query, [
     asin,
@@ -125,7 +125,8 @@ const createProductData = async (productData) => {
     msrp_price,
     fba_fee,
     amz_commission,
-    purchase_price,
+    initial_review_price,
+    final_review_price,
     inventory_quantity,
     weight,
     length,
@@ -229,7 +230,8 @@ const batchInsertProducts = async (productsData) => {
           msrp_price: product.msrp_price || 0,
           fba_fee: product.fba_fee || 0,
           amz_commission: product.amz_commission || 0,
-          purchase_price: product.purchase_price || 0,
+          initial_review_price: product.initial_review_price || 0,
+          final_review_price: product.final_review_price || 0,
           inventory_quantity: product.inventory_quantity || 0,
           weight: product.weight || 0,
           length: product.length || 0,
@@ -253,12 +255,12 @@ const batchInsertProducts = async (productsData) => {
           `INSERT INTO product_management (
             asin, fnsku, brand, title, product_name, remark, 
             shipping_method, campaign_method, transparent_program, 
-            hold_price, bd_price, msrp_price, fba_fee, amz_commission, purchase_price, 
+            hold_price, bd_price, msrp_price, fba_fee, amz_commission, initial_review_price, final_review_price, 
             inventory_quantity, weight, length, width, height, 
             has_battery, battery_type, battery_capacity, 
             store_id, store_name, store_email, 
             win_status, status, submit_time, invoice_number, purchase_quantity
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             insertData.asin,
             insertData.fnsku,
@@ -274,7 +276,8 @@ const batchInsertProducts = async (productsData) => {
             insertData.msrp_price,
             insertData.fba_fee,
             insertData.amz_commission,
-            insertData.purchase_price,
+            insertData.initial_review_price,
+            insertData.final_review_price,
             insertData.inventory_quantity,
             insertData.weight,
             insertData.length,
@@ -323,10 +326,60 @@ const batchInsertProducts = async (productsData) => {
   }
 };
 
+// 获取产品总数（支持搜索条件）
+const getProductCount = async (searchParams) => {
+  let query = "SELECT COUNT(*) as total FROM product_management";
+  const queryParams = [];
+  const whereConditions = [];
+
+  // 构建搜索条件（与 getAllProductData 保持一致）
+  if (searchParams.asin) {
+    whereConditions.push("asin = ?");
+    queryParams.push(searchParams.asin);
+  }
+  if (searchParams.fnsku) {
+    whereConditions.push("fnsku = ?");
+    queryParams.push(searchParams.fnsku);
+  }
+  if (searchParams.title) {
+    whereConditions.push("title LIKE ?");
+    queryParams.push(`%${searchParams.title}%`);
+  }
+  if (searchParams.product_name) {
+    whereConditions.push("product_name LIKE ?");
+    queryParams.push(`%${searchParams.product_name}%`);
+  }
+  if (searchParams.brand) {
+    whereConditions.push("brand LIKE ?");
+    queryParams.push(`%${searchParams.brand}%`);
+  }
+  if (searchParams.store_name) {
+    whereConditions.push("store_name LIKE ?");
+    queryParams.push(`%${searchParams.store_name}%`);
+  }
+  if (searchParams.win_status !== undefined) {
+    whereConditions.push("win_status = ?");
+    queryParams.push(searchParams.win_status);
+  }
+  if (searchParams.status) {
+    whereConditions.push("status = ?");
+    queryParams.push(searchParams.status);
+  }
+
+  // 添加WHERE子句
+  if (whereConditions.length > 0) {
+    query += " WHERE " + whereConditions.join(" AND ");
+  }
+
+  const [rows] = await pool.query(query, queryParams);
+  return rows[0]?.total || 0;
+};
+
 module.exports = {
   getAllProductData,
   createProductData,
   deleteProductData,
   updateProductData,
   batchInsertProducts,
+  getProductCount,
 };
