@@ -24,6 +24,13 @@ const getAllCheckPrice = async (req, res) => {
       has_battery: req.body.has_battery,
       win: req.body.win,
       shipping_method: req.body.shipping_method,
+      activity_start_date: req.body.activity_start_date,
+      activity_end_date: req.body.activity_end_date,
+      total_quantity: req.body.total_quantity,
+      activity_submission_date: req.body.activity_submission_date,
+      requestedQuantity: req.body.requestedQuantity,
+      group_id: req.body.group_id,
+      activity_type: req.body.activity_type,
     };
 
     // 过滤掉undefined的搜索参数
@@ -125,6 +132,10 @@ const createCheckPrice = async (req, res) => {
       battery_capacity: req.body.battery_capacity || 0,
       transparent_program: req.body.transparent_program || "N",
       has_battery: req.body.has_battery || "N",
+      customer_id: req.body.customer_id || 0,
+      total_quantity: req.body.total_quantity || 0,
+      requestedQuantity: req.body.requestedQuantity || 0,
+      group_id: req.body.group_id || 0,
       ...req.body,
     };
 
@@ -159,6 +170,12 @@ const updateCheckPrice = async (req, res) => {
         success: false,
         message: "核价数据ID和更新数据不能为空",
       });
+    }
+
+    // 处理 user_id 字段映射到 customer_id
+    if (updateData.user_id) {
+      updateData.customer_id = updateData.user_id;
+      delete updateData.user_id; // 删除 user_id 避免传递不存在的字段
     }
 
     const isUpdated = await checkPriceModel.updateCheckPrice(id, updateData);
@@ -231,6 +248,13 @@ const exportCheckPrice = async (req, res) => {
       fnsku: req.body.fnsku,
       brand: req.body.brand,
       win: req.body.win,
+      activity_start_date: req.body.activity_start_date,
+      activity_end_date: req.body.activity_end_date,
+      total_quantity: req.body.total_quantity,
+      activity_submission_date: req.body.activity_submission_date,
+      requestedQuantity: req.body.requestedQuantity,
+      group_id: req.body.group_id,
+      activity_type: req.body.activity_type,
     };
 
     // 过滤掉undefined的搜索参数

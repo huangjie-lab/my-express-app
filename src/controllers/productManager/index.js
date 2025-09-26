@@ -1,9 +1,10 @@
 const productModel = require("../../models/productManager/index.js");
+const checkPriceModel = require("../../models/checkPriceModel.js");
 const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 
-// 查询所有产品
+// 查询所有产品 (查询 check_price 表)
 const getAllProduct = async (req, res) => {
   try {
     // 获取分页参数
@@ -12,7 +13,7 @@ const getAllProduct = async (req, res) => {
     const offset = (page - 1) * pageSize;
     const limit = pageSize;
 
-    // 获取搜索参数
+    // 获取搜索参数 (适配 check_price 表)
     const searchParams = {
       asin: req.body.asin,
       fnsku: req.body.fnsku,
@@ -20,11 +21,8 @@ const getAllProduct = async (req, res) => {
       product_name: req.body.product_name,
       brand: req.body.brand,
       store_name: req.body.store_name,
-      win_status:
-        req.body.win_status !== undefined
-          ? parseInt(req.body.win_status)
-          : undefined,
-      status: req.body.status,
+      win: req.body.win !== undefined ? req.body.win : undefined,
+      customer_id: req.body.customer_id,
     };
 
     // 过滤掉undefined的参数
@@ -34,10 +32,10 @@ const getAllProduct = async (req, res) => {
       }
     });
 
-    // 同时获取产品列表和总数
+    // 同时获取核价数据列表和总数
     const [products, total] = await Promise.all([
-      productModel.getAllProductData(searchParams, limit, offset),
-      productModel.getProductCount(searchParams),
+      checkPriceModel.getAllCheckPrice(searchParams, limit, offset),
+      checkPriceModel.getCheckPriceCount(searchParams),
     ]);
 
     res.status(200).json({
@@ -45,42 +43,79 @@ const getAllProduct = async (req, res) => {
       total: total,
     });
   } catch (error) {
-    res.status(500).json({ message: "获取产品数据失败", error: error.message });
+    res.status(500).json({ message: "获取数据失败", error: error.message });
   }
 };
 
-// 新增产品 - 添加参数验证
+// 新增产品 - 添加参数验证 (插入到 check_price 表)
 const createProduct = async (req, res) => {
   try {
     // 验证必填字段
-    const { asin, brand, title } = req.body;
-    if (!asin || !brand || !title) {
-      return res
-        .status(400)
-        .json({ message: "缺少必填字段: asin, brand, title为必填项" });
+    const { asin, fnsku, brand, product_name } = req.body;
+    if (!asin || !fnsku || !brand || !product_name) {
+      return res.status(400).json({
+        message: "缺少必填字段: asin, fnsku, brand, product_name为必填项",
+      });
     }
 
-    // 添加默认值处理
-    const productData = {
-      transparent_program: req.body.transparent_program || 0,
+    // 准备核价数据，设置默认值
+    const checkPriceData = {
+      customer_id: req.body.customer_id || null,
+      asin: req.body.asin,
+      win: req.body.win || null,
+      fnsku: req.body.fnsku,
+      brand: req.body.brand,
+      product_name: req.body.product_name,
+      title: req.body.title || "",
+      shipping_method: req.body.shipping_method || null,
+      promotion_method: req.body.promotion_method || null,
+      hold_price: req.body.hold_price || 0,
+      bd_price: req.body.bd_price || 0,
+      initial_review_price: req.body.initial_review_price || 0,
+      final_review_price: req.body.final_review_price || 0,
+      purchase_price: req.body.purchase_price || 0,
+      pricing_benchmark: req.body.pricing_benchmark || null,
+      woot_notes: req.body.woot_notes || null,
+      msrp_price: req.body.msrp_price || 0,
       inventory_quantity: req.body.inventory_quantity || 0,
-      has_battery: req.body.has_battery || 0,
-      purchase_quantity: req.body.purchase_quantity || 0,
-      invoice_number: req.body.invoice_number || "",
-      ...req.body,
+      actual_quantity: req.body.actual_quantity || 0,
+      invoice_number: req.body.invoice_number || null,
+      transparent_program: req.body.transparent_program || "N",
+      amz_commission: req.body.amz_commission || 0,
+      fba_shipping_fee: req.body.fba_shipping_fee || 0,
+      weight: req.body.weight || 0,
+      length: req.body.length || 0,
+      width: req.body.width || 0,
+      height: req.body.height || 0,
+      store_id: req.body.store_id || null,
+      store_name: req.body.store_name || null,
+      store_email: req.body.store_email || null,
+      submission_time: req.body.submission_time || null,
+      has_battery: req.body.has_battery || "N",
+      battery_type: req.body.battery_type || null,
+      battery_capacity: req.body.battery_capacity || 0,
+      status: req.body.status || null,
+      initial_purchase_price: req.body.initial_purchase_price || 0,
+      final_purchase_price: req.body.final_purchase_price || 0,
     };
 
-    const newProduct = await productModel.createProductData(productData);
+    const newCheckPrice = await checkPriceModel.createCheckPrice(
+      checkPriceData
+    );
     res.status(201).json({
-      message: "产品创建成功",
-      data: newProduct,
+      message: "创建成功",
+      data: newCheckPrice,
     });
   } catch (error) {
-    res.status(500).json({ message: "产品创建失败", error: error.message });
+    console.error("Error creating check price data:", error);
+    res.status(500).json({
+      message: "创建失败",
+      error: error.message,
+    });
   }
 };
 
-// 删除产品
+// 删除产品 (删除 check_price 表数据)
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -88,18 +123,18 @@ const deleteProduct = async (req, res) => {
       return res.status(400).json({ message: "缺少产品ID参数" });
     }
 
-    const isDeleted = await productModel.deleteProductData(id);
+    const isDeleted = await checkPriceModel.deleteCheckPrice(id);
     if (isDeleted) {
-      res.status(200).json({ message: "产品删除成功" });
+      res.status(200).json({ message: "删除成功" });
     } else {
-      res.status(404).json({ message: "产品不存在或已被删除" });
+      res.status(404).json({ message: "数据不存在或已被删除" });
     }
   } catch (error) {
-    res.status(500).json({ message: "产品删除失败", error: error.message });
+    res.status(500).json({ message: "删除失败", error: error.message });
   }
 };
 
-// 更新产品
+// 更新产品 (更新 check_price 表数据)
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -109,14 +144,14 @@ const updateProduct = async (req, res) => {
       return res.status(400).json({ message: "产品ID和更新数据不能为空" });
     }
 
-    const isUpdated = await productModel.updateProductData(id, updateData);
+    const isUpdated = await checkPriceModel.updateCheckPrice(id, updateData);
     if (isUpdated) {
-      res.status(200).json({ message: "产品更新成功" });
+      res.status(200).json({ message: "更新成功" });
     } else {
-      res.status(404).json({ message: "产品不存在或未修改任何数据" });
+      res.status(404).json({ message: "数据不存在或未修改任何数据" });
     }
   } catch (error) {
-    res.status(500).json({ message: "产品更新失败", error: error.message });
+    res.status(500).json({ message: "更新失败", error: error.message });
   }
 };
 
@@ -148,16 +183,8 @@ const importProducts = async (req, res) => {
     const headers = jsonData[0] || [];
     const rows = jsonData.slice(1);
 
-    // 验证表头是否包含必填字段
-    const requiredFields = [
-      "asin",
-      "fnsku",
-      "title",
-      "brand",
-      "win_status",
-      "status",
-      "product_name",
-    ];
+    // 验证表头是否包含必填字段 (check_price表)
+    const requiredFields = ["asin", "fnsku", "brand", "product_name"];
     const missingFields = requiredFields.filter(
       (field) => !headers.includes(field)
     );
@@ -182,20 +209,92 @@ const importProducts = async (req, res) => {
       return rowData;
     });
 
-    // 调用批量插入方法
-    const importResult = await productModel.batchInsertProducts(processedData);
+    // 逐条插入数据到 check_price 表
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
+
+    for (let i = 0; i < processedData.length; i++) {
+      const product = processedData[i];
+      try {
+        // 验证必填字段
+        if (
+          !product.asin ||
+          !product.fnsku ||
+          !product.brand ||
+          !product.product_name
+        ) {
+          errors.push({
+            row: i + 2, // Excel行号（从2开始，因为第1行是表头）
+            error: "缺少必填字段: asin, fnsku, brand, product_name为必填项",
+          });
+          failedCount++;
+          continue;
+        }
+
+        // 准备核价数据
+        const checkPriceData = {
+          customer_id: product.customer_id || null,
+          asin: product.asin,
+          win: product.win || null,
+          fnsku: product.fnsku,
+          brand: product.brand,
+          product_name: product.product_name,
+          title: product.title || "",
+          shipping_method: product.shipping_method || null,
+          promotion_method: product.promotion_method || null,
+          hold_price: product.hold_price || 0,
+          bd_price: product.bd_price || 0,
+          initial_review_price: product.initial_review_price || 0,
+          final_review_price: product.final_review_price || 0,
+          purchase_price: product.purchase_price || 0,
+          pricing_benchmark: product.pricing_benchmark || null,
+          woot_notes: product.woot_notes || null,
+          msrp_price: product.msrp_price || 0,
+          inventory_quantity: product.inventory_quantity || 0,
+          actual_quantity: product.actual_quantity || 0,
+          invoice_number: product.invoice_number || null,
+          transparent_program: product.transparent_program || "N",
+          amz_commission: product.amz_commission || 0,
+          fba_shipping_fee: product.fba_shipping_fee || 0,
+          weight: product.weight || 0,
+          length: product.length || 0,
+          width: product.width || 0,
+          height: product.height || 0,
+          store_id: product.store_id || null,
+          store_name: product.store_name || null,
+          store_email: product.store_email || null,
+          submission_time: product.submission_time || null,
+          has_battery: product.has_battery || "N",
+          battery_type: product.battery_type || null,
+          battery_capacity: product.battery_capacity || 0,
+          status: product.status || null,
+          initial_purchase_price: product.initial_purchase_price || 0,
+          final_purchase_price: product.final_purchase_price || 0,
+        };
+
+        await checkPriceModel.createCheckPrice(checkPriceData);
+        successCount++;
+      } catch (error) {
+        errors.push({
+          row: i + 2,
+          error: error.message,
+        });
+        failedCount++;
+      }
+    }
 
     // 清理临时文件
     fs.unlinkSync(filePath);
 
     res.json({
       success: true,
-      message: "Excel文件导入成功",
+      message: "Excel文件导入完成",
       data: {
         totalRows: processedData.length,
-        successRows: importResult.success,
-        failedRows: importResult.failed,
-        errors: importResult.errors,
+        successRows: successCount,
+        failedRows: failedCount,
+        errors: errors,
       },
     });
   } catch (error) {
@@ -219,7 +318,7 @@ const exportProducts = async (req, res) => {
   req.body = req.body || {};
 
   try {
-    // 获取查询参数
+    // 获取查询参数 (适配 check_price 表)
     const searchParams = {
       asin: req.body.asin,
       fnsku: req.body.fnsku,
@@ -227,11 +326,8 @@ const exportProducts = async (req, res) => {
       product_name: req.body.product_name,
       brand: req.body.brand,
       store_name: req.body.store_name,
-      win_status:
-        req.body.win_status !== undefined
-          ? parseInt(req.body.win_status)
-          : undefined,
-      status: req.body.status,
+      win: req.body.win !== undefined ? req.body.win : undefined,
+      customer_id: req.body.customer_id,
     };
 
     // 过滤掉undefined的参数
@@ -241,8 +337,8 @@ const exportProducts = async (req, res) => {
       }
     });
 
-    // 获取所有数据（不分页）
-    const products = await productModel.getAllProductData(
+    // 获取所有数据（不分页）- 从 check_price 表
+    const products = await checkPriceModel.getAllCheckPrice(
       searchParams,
       10000,
       0

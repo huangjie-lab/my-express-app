@@ -14,30 +14,66 @@ const formatDateTime = (date) => {
 
 // 获取所有核价数据（支持搜索）
 const getAllCheckPrice = async (searchParams = {}, limit = 100, offset = 0) => {
-  let query = "SELECT * FROM check_price";
+  let query = `
+    SELECT cp.*, 
+           COALESCE((
+             SELECT SUM(COALESCE(cp2.pickup_quantity, 0)) 
+             FROM check_price cp2 
+             WHERE cp2.customer_id = cp.customer_id
+           ), 0) as accumulatedQuantity 
+    FROM check_price cp
+  `;
   const queryParams = [];
   const whereConditions = [];
 
   // 构建搜索条件
   if (searchParams.customer_id) {
-    whereConditions.push("customer_id LIKE ?");
+    whereConditions.push("cp.customer_id LIKE ?");
     queryParams.push(`%${searchParams.customer_id}%`);
   }
   if (searchParams.asin) {
-    whereConditions.push("asin = ?");
+    whereConditions.push("cp.asin = ?");
     queryParams.push(searchParams.asin);
   }
   if (searchParams.fnsku) {
-    whereConditions.push("fnsku = ?");
+    whereConditions.push("cp.fnsku = ?");
     queryParams.push(searchParams.fnsku);
   }
   if (searchParams.brand) {
-    whereConditions.push("brand LIKE ?");
+    whereConditions.push("cp.brand LIKE ?");
     queryParams.push(`%${searchParams.brand}%`);
   }
   if (searchParams.win) {
-    whereConditions.push("win LIKE ?");
+    whereConditions.push("cp.win LIKE ?");
     queryParams.push(`%${searchParams.win}%`);
+  }
+  if (searchParams.activity_start_date) {
+    whereConditions.push("cp.activity_start_date >= ?");
+    queryParams.push(searchParams.activity_start_date);
+  }
+  if (searchParams.activity_end_date) {
+    whereConditions.push("cp.activity_end_date <= ?");
+    queryParams.push(searchParams.activity_end_date);
+  }
+  if (searchParams.total_quantity) {
+    whereConditions.push("cp.total_quantity >= ?");
+    queryParams.push(searchParams.total_quantity);
+  }
+  if (searchParams.activity_submission_date) {
+    whereConditions.push("cp.activity_submission_date >= ?");
+    queryParams.push(searchParams.activity_submission_date);
+  }
+  if (searchParams.requestedQuantity) {
+    whereConditions.push("cp.requestedQuantity >= ?");
+    queryParams.push(searchParams.requestedQuantity);
+  }
+  if (searchParams.group_id) {
+    whereConditions.push("cp.group_id = ?");
+    queryParams.push(searchParams.group_id);
+  }
+  if (searchParams.activity_type) {
+    whereConditions.push("cp.activity_type LIKE ?");
+    queryParams.push(`%${searchParams.activity_type}%`);
   }
 
   // 添加WHERE子句
@@ -46,7 +82,7 @@ const getAllCheckPrice = async (searchParams = {}, limit = 100, offset = 0) => {
   }
 
   // 添加排序和分页
-  query += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+  query += " ORDER BY cp.created_at DESC LIMIT ? OFFSET ?";
   queryParams.push(limit, offset);
 
   const [rows] = await pool.query(query, queryParams);
@@ -80,6 +116,34 @@ const getCheckPriceCount = async (searchParams = {}) => {
     whereConditions.push("win LIKE ?");
     queryParams.push(`%${searchParams.win}%`);
   }
+  if (searchParams.activity_start_date) {
+    whereConditions.push("activity_start_date >= ?");
+    queryParams.push(searchParams.activity_start_date);
+  }
+  if (searchParams.activity_end_date) {
+    whereConditions.push("activity_end_date <= ?");
+    queryParams.push(searchParams.activity_end_date);
+  }
+  if (searchParams.total_quantity) {
+    whereConditions.push("total_quantity >= ?");
+    queryParams.push(searchParams.total_quantity);
+  }
+  if (searchParams.activity_submission_date) {
+    whereConditions.push("activity_submission_date >= ?");
+    queryParams.push(searchParams.activity_submission_date);
+  }
+  if (searchParams.requestedQuantity) {
+    whereConditions.push("requestedQuantity >= ?");
+    queryParams.push(searchParams.requestedQuantity);
+  }
+  if (searchParams.group_id) {
+    whereConditions.push("group_id = ?");
+    queryParams.push(searchParams.group_id);
+  }
+  if (searchParams.activity_type) {
+    whereConditions.push("activity_type LIKE ?");
+    queryParams.push(`%${searchParams.activity_type}%`);
+  }
 
   // 添加WHERE子句
   if (whereConditions.length > 0) {
@@ -92,9 +156,19 @@ const getCheckPriceCount = async (searchParams = {}) => {
 
 // 根据ID获取核价数据
 const getCheckPriceById = async (id) => {
-  const [rows] = await pool.query("SELECT * FROM check_price WHERE id = ?", [
-    id,
-  ]);
+  const [rows] = await pool.query(
+    `
+    SELECT cp.*, 
+           COALESCE((
+             SELECT SUM(COALESCE(cp2.pickup_quantity, 0)) 
+             FROM check_price cp2 
+             WHERE cp2.customer_id = cp.customer_id
+           ), 0) as accumulatedQuantity 
+    FROM check_price cp 
+    WHERE cp.id = ?
+  `,
+    [id]
+  );
   return rows[0];
 };
 
@@ -135,6 +209,16 @@ const createCheckPrice = async (checkPriceData) => {
     has_battery,
     battery_type,
     battery_capacity,
+    status,
+    initial_purchase_price,
+    final_purchase_price,
+    activity_start_date,
+    activity_end_date,
+    total_quantity,
+    activity_submission_date,
+    requestedQuantity,
+    group_id,
+    activity_type,
   } = checkPriceData;
 
   const query = `INSERT INTO check_price (
@@ -145,8 +229,11 @@ const createCheckPrice = async (checkPriceData) => {
     actual_quantity, invoice_number, transparent_program, 
     amz_commission, fba_shipping_fee, weight, length, width, height, 
     store_id, store_name, store_email, submission_time, 
-    has_battery, battery_type, battery_capacity
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    has_battery, battery_type, battery_capacity, status,
+    initial_purchase_price, final_purchase_price, activity_start_date,
+    activity_end_date, total_quantity, activity_submission_date, requestedQuantity,
+    group_id, activity_type
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const [result] = await pool.query(query, [
     customer_id,
@@ -183,6 +270,16 @@ const createCheckPrice = async (checkPriceData) => {
     has_battery,
     battery_type,
     battery_capacity,
+    status,
+    initial_purchase_price,
+    final_purchase_price,
+    activity_start_date,
+    activity_end_date,
+    total_quantity,
+    activity_submission_date,
+    requestedQuantity,
+    group_id,
+    activity_type,
   ]);
 
   return { id: result.insertId, ...checkPriceData };
@@ -211,30 +308,66 @@ const deleteCheckPrice = async (id) => {
 
 // 获取所有核价数据用于导出（无分页限制，支持搜索）
 const getAllCheckPriceForExport = async (searchParams = {}) => {
-  let query = "SELECT * FROM check_price";
+  let query = `
+    SELECT cp.*, 
+           COALESCE((
+             SELECT SUM(COALESCE(cp2.pickup_quantity, 0)) 
+             FROM check_price cp2 
+             WHERE cp2.customer_id = cp.customer_id
+           ), 0) as accumulatedQuantity 
+    FROM check_price cp
+  `;
   const queryParams = [];
   const whereConditions = [];
 
   // 构建搜索条件（与 getAllCheckPrice 保持一致）
   if (searchParams.customer_id) {
-    whereConditions.push("customer_id LIKE ?");
+    whereConditions.push("cp.customer_id LIKE ?");
     queryParams.push(`%${searchParams.customer_id}%`);
   }
   if (searchParams.asin) {
-    whereConditions.push("asin = ?");
+    whereConditions.push("cp.asin = ?");
     queryParams.push(searchParams.asin);
   }
   if (searchParams.fnsku) {
-    whereConditions.push("fnsku = ?");
+    whereConditions.push("cp.fnsku = ?");
     queryParams.push(searchParams.fnsku);
   }
   if (searchParams.brand) {
-    whereConditions.push("brand LIKE ?");
+    whereConditions.push("cp.brand LIKE ?");
     queryParams.push(`%${searchParams.brand}%`);
   }
   if (searchParams.win) {
-    whereConditions.push("win LIKE ?");
+    whereConditions.push("cp.win LIKE ?");
     queryParams.push(`%${searchParams.win}%`);
+  }
+  if (searchParams.activity_start_date) {
+    whereConditions.push("cp.activity_start_date >= ?");
+    queryParams.push(searchParams.activity_start_date);
+  }
+  if (searchParams.activity_end_date) {
+    whereConditions.push("cp.activity_end_date <= ?");
+    queryParams.push(searchParams.activity_end_date);
+  }
+  if (searchParams.total_quantity) {
+    whereConditions.push("cp.total_quantity >= ?");
+    queryParams.push(searchParams.total_quantity);
+  }
+  if (searchParams.activity_submission_date) {
+    whereConditions.push("cp.activity_submission_date >= ?");
+    queryParams.push(searchParams.activity_submission_date);
+  }
+  if (searchParams.requestedQuantity) {
+    whereConditions.push("cp.requestedQuantity >= ?");
+    queryParams.push(searchParams.requestedQuantity);
+  }
+  if (searchParams.group_id) {
+    whereConditions.push("cp.group_id = ?");
+    queryParams.push(searchParams.group_id);
+  }
+  if (searchParams.activity_type) {
+    whereConditions.push("cp.activity_type LIKE ?");
+    queryParams.push(`%${searchParams.activity_type}%`);
   }
 
   // 添加WHERE子句
@@ -243,7 +376,7 @@ const getAllCheckPriceForExport = async (searchParams = {}) => {
   }
 
   // 添加排序（无分页）
-  query += " ORDER BY created_at DESC";
+  query += " ORDER BY cp.created_at DESC";
 
   const [rows] = await pool.query(query, queryParams);
   return rows;

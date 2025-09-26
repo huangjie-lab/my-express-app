@@ -42,9 +42,9 @@ const getAllProductData = async (searchParams, limit, offset) => {
     whereConditions.push("store_name LIKE ?");
     queryParams.push(`%${searchParams.store_name}%`);
   }
-  if (searchParams.win_status !== undefined) {
-    whereConditions.push("win_status = ?");
-    queryParams.push(searchParams.win_status);
+  if (searchParams.win !== undefined) {
+    whereConditions.push("win = ?");
+    queryParams.push(searchParams.win);
   }
   if (searchParams.status) {
     whereConditions.push("status = ?");
@@ -94,7 +94,7 @@ const createProductData = async (productData) => {
     store_id,
     store_name,
     store_email,
-    win_status,
+    win,
     status,
     submit_time,
     invoice_number,
@@ -107,7 +107,7 @@ const createProductData = async (productData) => {
     inventory_quantity, weight, length, width, height,
     has_battery, battery_type, battery_capacity, 
     store_id, store_name, store_email, 
-    win_status, status, submit_time, invoice_number, purchase_quantity
+    win, status, submit_time, invoice_number, purchase_quantity
   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const [result] = await pool.query(query, [
@@ -138,7 +138,7 @@ const createProductData = async (productData) => {
     store_id,
     store_name,
     store_email,
-    win_status,
+    win,
     status,
     submit_time,
     invoice_number,
@@ -187,15 +187,15 @@ const batchInsertProducts = async (productsData) => {
           !product.fnsku ||
           !product.title ||
           !product.brand ||
-          product.win_status === undefined ||
-          product.win_status === null ||
+          product.win === undefined ||
+          product.win === null ||
           !product.status ||
           !product.product_name
         ) {
           errors.push({
             row: i + 2, // Excel行号（从2开始，因为第1行是表头）
             error:
-              "缺少必填字段: asin, fnsku, title, brand, win_status, status, product_name为必填项",
+              "缺少必填字段: asin, fnsku, title, brand, win, status, product_name为必填项",
           });
           continue;
         }
@@ -243,7 +243,7 @@ const batchInsertProducts = async (productsData) => {
           store_id: product.store_id || "",
           store_name: product.store_name || "",
           store_email: product.store_email || "",
-          win_status: product.win_status,
+          win: product.win,
           status: product.status,
           submit_time: product.submit_time || formatDateTime(new Date()),
           invoice_number: product.invoice_number || "",
@@ -259,7 +259,7 @@ const batchInsertProducts = async (productsData) => {
             inventory_quantity, weight, length, width, height, 
             has_battery, battery_type, battery_capacity, 
             store_id, store_name, store_email, 
-            win_status, status, submit_time, invoice_number, purchase_quantity
+            win, status, submit_time, invoice_number, purchase_quantity
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             insertData.asin,
@@ -289,7 +289,7 @@ const batchInsertProducts = async (productsData) => {
             insertData.store_id,
             insertData.store_name,
             insertData.store_email,
-            insertData.win_status,
+            insertData.win,
             insertData.status,
             insertData.submit_time,
             insertData.invoice_number,
@@ -357,9 +357,9 @@ const getProductCount = async (searchParams) => {
     whereConditions.push("store_name LIKE ?");
     queryParams.push(`%${searchParams.store_name}%`);
   }
-  if (searchParams.win_status !== undefined) {
-    whereConditions.push("win_status = ?");
-    queryParams.push(searchParams.win_status);
+  if (searchParams.win !== undefined) {
+    whereConditions.push("win = ?");
+    queryParams.push(searchParams.win);
   }
   if (searchParams.status) {
     whereConditions.push("status = ?");
