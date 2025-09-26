@@ -75,6 +75,26 @@ const getAllCheckPrice = async (searchParams = {}, limit = 100, offset = 0) => {
     whereConditions.push("cp.activity_type LIKE ?");
     queryParams.push(`%${searchParams.activity_type}%`);
   }
+  if (searchParams.customer_name) {
+    whereConditions.push("cp.customer_name LIKE ?");
+    queryParams.push(`%${searchParams.customer_name}%`);
+  }
+  if (searchParams.customer_request) {
+    whereConditions.push("cp.customer_request LIKE ?");
+    queryParams.push(`%${searchParams.customer_request}%`);
+  }
+  if (searchParams.adjusted_bd_price) {
+    whereConditions.push("cp.adjusted_bd_price >= ?");
+    queryParams.push(searchParams.adjusted_bd_price);
+  }
+  if (searchParams.adjusted_purchase_price) {
+    whereConditions.push("cp.adjusted_purchase_price >= ?");
+    queryParams.push(searchParams.adjusted_purchase_price);
+  }
+  if (searchParams.adjustment_time) {
+    whereConditions.push("cp.adjustment_time >= ?");
+    queryParams.push(searchParams.adjustment_time);
+  }
 
   // 添加WHERE子句
   if (whereConditions.length > 0) {
@@ -143,6 +163,26 @@ const getCheckPriceCount = async (searchParams = {}) => {
   if (searchParams.activity_type) {
     whereConditions.push("activity_type LIKE ?");
     queryParams.push(`%${searchParams.activity_type}%`);
+  }
+  if (searchParams.customer_name) {
+    whereConditions.push("customer_name LIKE ?");
+    queryParams.push(`%${searchParams.customer_name}%`);
+  }
+  if (searchParams.customer_request) {
+    whereConditions.push("customer_request LIKE ?");
+    queryParams.push(`%${searchParams.customer_request}%`);
+  }
+  if (searchParams.adjusted_bd_price) {
+    whereConditions.push("adjusted_bd_price >= ?");
+    queryParams.push(searchParams.adjusted_bd_price);
+  }
+  if (searchParams.adjusted_purchase_price) {
+    whereConditions.push("adjusted_purchase_price >= ?");
+    queryParams.push(searchParams.adjusted_purchase_price);
+  }
+  if (searchParams.adjustment_time) {
+    whereConditions.push("adjustment_time >= ?");
+    queryParams.push(searchParams.adjustment_time);
   }
 
   // 添加WHERE子句
@@ -219,6 +259,11 @@ const createCheckPrice = async (checkPriceData) => {
     requestedQuantity,
     group_id,
     activity_type,
+    adjusted_bd_price,
+    adjusted_purchase_price,
+    adjustment_time,
+    customer_name,
+    customer_request,
   } = checkPriceData;
 
   const query = `INSERT INTO check_price (
@@ -232,8 +277,9 @@ const createCheckPrice = async (checkPriceData) => {
     has_battery, battery_type, battery_capacity, status,
     initial_purchase_price, final_purchase_price, activity_start_date,
     activity_end_date, total_quantity, activity_submission_date, requestedQuantity,
-    group_id, activity_type
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    group_id, activity_type, adjusted_bd_price, adjusted_purchase_price,
+    adjustment_time, customer_name, customer_request
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const [result] = await pool.query(query, [
     customer_id,
@@ -280,6 +326,11 @@ const createCheckPrice = async (checkPriceData) => {
     requestedQuantity,
     group_id,
     activity_type,
+    adjusted_bd_price,
+    adjusted_purchase_price,
+    adjustment_time || formatDateTime(new Date()),
+    customer_name,
+    customer_request,
   ]);
 
   return { id: result.insertId, ...checkPriceData };
@@ -368,6 +419,26 @@ const getAllCheckPriceForExport = async (searchParams = {}) => {
   if (searchParams.activity_type) {
     whereConditions.push("cp.activity_type LIKE ?");
     queryParams.push(`%${searchParams.activity_type}%`);
+  }
+  if (searchParams.customer_name) {
+    whereConditions.push("cp.customer_name LIKE ?");
+    queryParams.push(`%${searchParams.customer_name}%`);
+  }
+  if (searchParams.customer_request) {
+    whereConditions.push("cp.customer_request LIKE ?");
+    queryParams.push(`%${searchParams.customer_request}%`);
+  }
+  if (searchParams.adjusted_bd_price) {
+    whereConditions.push("cp.adjusted_bd_price >= ?");
+    queryParams.push(searchParams.adjusted_bd_price);
+  }
+  if (searchParams.adjusted_purchase_price) {
+    whereConditions.push("cp.adjusted_purchase_price >= ?");
+    queryParams.push(searchParams.adjusted_purchase_price);
+  }
+  if (searchParams.adjustment_time) {
+    whereConditions.push("cp.adjustment_time >= ?");
+    queryParams.push(searchParams.adjustment_time);
   }
 
   // 添加WHERE子句

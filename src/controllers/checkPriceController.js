@@ -31,6 +31,11 @@ const getAllCheckPrice = async (req, res) => {
       requestedQuantity: req.body.requestedQuantity,
       group_id: req.body.group_id,
       activity_type: req.body.activity_type,
+      customer_name: req.body.customer_name,
+      customer_request: req.body.customer_request,
+      adjusted_bd_price: req.body.adjusted_bd_price,
+      adjusted_purchase_price: req.body.adjusted_purchase_price,
+      adjustment_time: req.body.adjustment_time,
     };
 
     // 过滤掉undefined的搜索参数
@@ -136,6 +141,10 @@ const createCheckPrice = async (req, res) => {
       total_quantity: req.body.total_quantity || 0,
       requestedQuantity: req.body.requestedQuantity || 0,
       group_id: req.body.group_id || 0,
+      adjusted_bd_price: req.body.adjusted_bd_price || 0,
+      adjusted_purchase_price: req.body.adjusted_purchase_price || 0,
+      customer_name: req.body.customer_name || "",
+      customer_request: req.body.customer_request || "",
       ...req.body,
     };
 
@@ -255,6 +264,11 @@ const exportCheckPrice = async (req, res) => {
       requestedQuantity: req.body.requestedQuantity,
       group_id: req.body.group_id,
       activity_type: req.body.activity_type,
+      customer_name: req.body.customer_name,
+      customer_request: req.body.customer_request,
+      adjusted_bd_price: req.body.adjusted_bd_price,
+      adjusted_purchase_price: req.body.adjusted_purchase_price,
+      adjustment_time: req.body.adjustment_time,
     };
 
     // 过滤掉undefined的搜索参数
