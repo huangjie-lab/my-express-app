@@ -95,6 +95,22 @@ const getAllCheckPrice = async (searchParams = {}, limit = 100, offset = 0) => {
     whereConditions.push("cp.adjustment_time >= ?");
     queryParams.push(searchParams.adjustment_time);
   }
+  if (searchParams.return_to_woot) {
+    whereConditions.push("cp.return_to_woot LIKE ?");
+    queryParams.push(`%${searchParams.return_to_woot}%`);
+  }
+  if (searchParams.registration_date) {
+    whereConditions.push("cp.registration_date >= ?");
+    queryParams.push(searchParams.registration_date);
+  }
+  if (searchParams.allowed_return_quantity) {
+    whereConditions.push("cp.allowed_return_quantity >= ?");
+    queryParams.push(searchParams.allowed_return_quantity);
+  }
+  if (searchParams.retained_quantity) {
+    whereConditions.push("cp.retained_quantity >= ?");
+    queryParams.push(searchParams.retained_quantity);
+  }
 
   // 添加WHERE子句
   if (whereConditions.length > 0) {
@@ -184,6 +200,22 @@ const getCheckPriceCount = async (searchParams = {}) => {
     whereConditions.push("adjustment_time >= ?");
     queryParams.push(searchParams.adjustment_time);
   }
+  if (searchParams.return_to_woot) {
+    whereConditions.push("return_to_woot LIKE ?");
+    queryParams.push(`%${searchParams.return_to_woot}%`);
+  }
+  if (searchParams.registration_date) {
+    whereConditions.push("registration_date >= ?");
+    queryParams.push(searchParams.registration_date);
+  }
+  if (searchParams.allowed_return_quantity) {
+    whereConditions.push("allowed_return_quantity >= ?");
+    queryParams.push(searchParams.allowed_return_quantity);
+  }
+  if (searchParams.retained_quantity) {
+    whereConditions.push("retained_quantity >= ?");
+    queryParams.push(searchParams.retained_quantity);
+  }
 
   // 添加WHERE子句
   if (whereConditions.length > 0) {
@@ -264,6 +296,10 @@ const createCheckPrice = async (checkPriceData) => {
     adjustment_time,
     customer_name,
     customer_request,
+    return_to_woot,
+    registration_date,
+    allowed_return_quantity,
+    retained_quantity,
   } = checkPriceData;
 
   const query = `INSERT INTO check_price (
@@ -278,8 +314,9 @@ const createCheckPrice = async (checkPriceData) => {
     initial_purchase_price, final_purchase_price, activity_start_date,
     activity_end_date, total_quantity, activity_submission_date, requestedQuantity,
     group_id, activity_type, adjusted_bd_price, adjusted_purchase_price,
-    adjustment_time, customer_name, customer_request
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    adjustment_time, customer_name, customer_request, return_to_woot,
+    registration_date, allowed_return_quantity, retained_quantity
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
   const [result] = await pool.query(query, [
     customer_id,
@@ -331,6 +368,10 @@ const createCheckPrice = async (checkPriceData) => {
     adjustment_time || formatDateTime(new Date()),
     customer_name,
     customer_request,
+    return_to_woot,
+    registration_date,
+    allowed_return_quantity,
+    retained_quantity,
   ]);
 
   return { id: result.insertId, ...checkPriceData };
@@ -439,6 +480,22 @@ const getAllCheckPriceForExport = async (searchParams = {}) => {
   if (searchParams.adjustment_time) {
     whereConditions.push("cp.adjustment_time >= ?");
     queryParams.push(searchParams.adjustment_time);
+  }
+  if (searchParams.return_to_woot) {
+    whereConditions.push("cp.return_to_woot LIKE ?");
+    queryParams.push(`%${searchParams.return_to_woot}%`);
+  }
+  if (searchParams.registration_date) {
+    whereConditions.push("cp.registration_date >= ?");
+    queryParams.push(searchParams.registration_date);
+  }
+  if (searchParams.allowed_return_quantity) {
+    whereConditions.push("cp.allowed_return_quantity >= ?");
+    queryParams.push(searchParams.allowed_return_quantity);
+  }
+  if (searchParams.retained_quantity) {
+    whereConditions.push("cp.retained_quantity >= ?");
+    queryParams.push(searchParams.retained_quantity);
   }
 
   // 添加WHERE子句

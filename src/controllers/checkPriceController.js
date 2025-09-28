@@ -36,6 +36,10 @@ const getAllCheckPrice = async (req, res) => {
       adjusted_bd_price: req.body.adjusted_bd_price,
       adjusted_purchase_price: req.body.adjusted_purchase_price,
       adjustment_time: req.body.adjustment_time,
+      return_to_woot: req.body.return_to_woot,
+      registration_date: req.body.registration_date,
+      allowed_return_quantity: req.body.allowed_return_quantity,
+      retained_quantity: req.body.retained_quantity,
     };
 
     // 过滤掉undefined的搜索参数
@@ -145,6 +149,10 @@ const createCheckPrice = async (req, res) => {
       adjusted_purchase_price: req.body.adjusted_purchase_price || 0,
       customer_name: req.body.customer_name || "",
       customer_request: req.body.customer_request || "",
+      return_to_woot: req.body.return_to_woot || "",
+      registration_date: req.body.registration_date || null,
+      allowed_return_quantity: req.body.allowed_return_quantity || 0,
+      retained_quantity: req.body.retained_quantity || 0,
       ...req.body,
     };
 
@@ -269,6 +277,10 @@ const exportCheckPrice = async (req, res) => {
       adjusted_bd_price: req.body.adjusted_bd_price,
       adjusted_purchase_price: req.body.adjusted_purchase_price,
       adjustment_time: req.body.adjustment_time,
+      return_to_woot: req.body.return_to_woot,
+      registration_date: req.body.registration_date,
+      allowed_return_quantity: req.body.allowed_return_quantity,
+      retained_quantity: req.body.retained_quantity,
     };
 
     // 过滤掉undefined的搜索参数

@@ -22,8 +22,13 @@ const getAllProduct = async (req, res) => {
       brand: req.body.brand,
       store_name: req.body.store_name,
       win: req.body.win !== undefined ? req.body.win : undefined,
-      customer_id: req.body.customer_id,
     };
+
+    // 角色权限检查：如果不是管理员，则强制过滤当前用户的数据
+    if (req.body.role !== "admin") {
+      // 非管理员用户只能查看自己的数据
+      searchParams.customer_id = req.body.customer_id;
+    }
 
     // 过滤掉undefined的参数
     Object.keys(searchParams).forEach((key) => {
@@ -51,52 +56,83 @@ const getAllProduct = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     // 验证必填字段
-    const { asin, fnsku, brand, product_name } = req.body;
-    if (!asin || !fnsku || !brand || !product_name) {
+    const { asin, fnsku, brand, product_name, customer_id } = req.body;
+    if (!asin || !fnsku || !brand || !product_name || !customer_id) {
       return res.status(400).json({
-        message: "缺少必填字段: asin, fnsku, brand, product_name为必填项",
+        message:
+          "缺少必填字段: asin, fnsku, brand, product_name, customer_id为必填项",
       });
     }
 
     // 准备核价数据，设置默认值
     const checkPriceData = {
-      customer_id: req.body.customer_id || null,
-      asin: req.body.asin,
-      win: req.body.win || null,
-      fnsku: req.body.fnsku,
-      brand: req.body.brand,
-      product_name: req.body.product_name,
-      title: req.body.title || "",
-      shipping_method: req.body.shipping_method || null,
-      promotion_method: req.body.promotion_method || null,
+      // customer_id: req.body.customer_id || null,
+      // asin: req.body.asin,
+      // win: req.body.win || null,
+      // fnsku: req.body.fnsku,
+      // brand: req.body.brand,
+      // product_name: req.body.product_name,
+      // title: req.body.title || "",
+      // shipping_method: req.body.shipping_method || null,
+      // promotion_method: req.body.promotion_method || null,
+      // hold_price: req.body.hold_price || 0,
+      // bd_price: req.body.bd_price || 0,
+      // initial_review_price: req.body.initial_review_price || 0,
+      // final_review_price: req.body.final_review_price || 0,
+      // purchase_price: req.body.purchase_price || 0,
+      // pricing_benchmark: req.body.pricing_benchmark || null,
+      // woot_notes: req.body.woot_notes || null,
+      // msrp_price: req.body.msrp_price || 0,
+      // inventory_quantity: req.body.inventory_quantity || 0,
+      // actual_quantity: req.body.actual_quantity || 0,
+      // invoice_number: req.body.invoice_number || null,
+      // transparent_program: req.body.transparent_program || "N",
+      // amz_commission: req.body.amz_commission || 0,
+      // fba_shipping_fee: req.body.fba_shipping_fee || 0,
+      // weight: req.body.weight || 0,
+      // length: req.body.length || 0,
+      // width: req.body.width || 0,
+      // height: req.body.height || 0,
+      // store_id: req.body.store_id || null,
+      // store_name: req.body.store_name || null,
+      // store_email: req.body.store_email || null,
+      // submission_time: req.body.submission_time || null,
+      // has_battery: req.body.has_battery || "N",
+      // battery_type: req.body.battery_type || null,
+      // battery_capacity: req.body.battery_capacity || 0,
+      // status: req.body.status || null,
+      // initial_purchase_price: req.body.initial_purchase_price || 0,
+      // final_purchase_price: req.body.final_purchase_price || 0,
       hold_price: req.body.hold_price || 0,
       bd_price: req.body.bd_price || 0,
       initial_review_price: req.body.initial_review_price || 0,
       final_review_price: req.body.final_review_price || 0,
       purchase_price: req.body.purchase_price || 0,
-      pricing_benchmark: req.body.pricing_benchmark || null,
-      woot_notes: req.body.woot_notes || null,
       msrp_price: req.body.msrp_price || 0,
       inventory_quantity: req.body.inventory_quantity || 0,
       actual_quantity: req.body.actual_quantity || 0,
-      invoice_number: req.body.invoice_number || null,
-      transparent_program: req.body.transparent_program || "N",
       amz_commission: req.body.amz_commission || 0,
       fba_shipping_fee: req.body.fba_shipping_fee || 0,
       weight: req.body.weight || 0,
       length: req.body.length || 0,
       width: req.body.width || 0,
       height: req.body.height || 0,
-      store_id: req.body.store_id || null,
-      store_name: req.body.store_name || null,
-      store_email: req.body.store_email || null,
-      submission_time: req.body.submission_time || null,
-      has_battery: req.body.has_battery || "N",
-      battery_type: req.body.battery_type || null,
       battery_capacity: req.body.battery_capacity || 0,
-      status: req.body.status || null,
-      initial_purchase_price: req.body.initial_purchase_price || 0,
-      final_purchase_price: req.body.final_purchase_price || 0,
+      transparent_program: req.body.transparent_program || "N",
+      has_battery: req.body.has_battery || "N",
+      customer_id: req.body.customer_id || 0,
+      total_quantity: req.body.total_quantity || 0,
+      requestedQuantity: req.body.requestedQuantity || 0,
+      group_id: req.body.group_id || 0,
+      adjusted_bd_price: req.body.adjusted_bd_price || 0,
+      adjusted_purchase_price: req.body.adjusted_purchase_price || 0,
+      customer_name: req.body.customer_name || "",
+      customer_request: req.body.customer_request || "",
+      return_to_woot: req.body.return_to_woot || "",
+      registration_date: req.body.registration_date || null,
+      allowed_return_quantity: req.body.allowed_return_quantity || 0,
+      retained_quantity: req.body.retained_quantity || 0,
+      ...req.body,
     };
 
     const newCheckPrice = await checkPriceModel.createCheckPrice(
@@ -327,8 +363,13 @@ const exportProducts = async (req, res) => {
       brand: req.body.brand,
       store_name: req.body.store_name,
       win: req.body.win !== undefined ? req.body.win : undefined,
-      customer_id: req.body.customer_id,
     };
+
+    // 角色权限检查：如果不是管理员，则强制过滤当前用户的数据
+    if (req.body.role !== "admin") {
+      // 非管理员用户只能导出自己的数据
+      searchParams.customer_id = req.body.customer_id || req.user.id;
+    }
 
     // 过滤掉undefined的参数
     Object.keys(searchParams).forEach((key) => {
