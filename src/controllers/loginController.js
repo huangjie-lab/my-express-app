@@ -78,10 +78,7 @@ const register = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     // 从FormData获取字段（文本字段在req.body，文件在req.file）
-    const { user_id, username, email, password, role, status } = req.body;
-    // 获取上传的图片文件
-    const imgFile = req.file;
-    console.log(imgFile, "imgFile");
+    const { user_id, username, email, password, role, status, img } = req.body;
 
     // 验证必填字段
     if (!user_id) {
@@ -123,9 +120,8 @@ const updateUser = async (req, res) => {
     if (role !== undefined) updateData.role = role;
     if (status !== undefined) updateData.status = status;
     // 处理图片上传
-    if (imgFile) {
-      // 保存图片URL（相对于网站根目录）
-      updateData.img = `/uploads/${imgFile.filename}`;
+    if (img !== undefined) {
+      updateData.img = img;
     }
 
     // 添加密码修改逻辑
